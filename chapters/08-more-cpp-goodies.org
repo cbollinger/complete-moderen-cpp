@@ -1,0 +1,71 @@
+* More C++ Goodies
+
+** ENUMS- Part I (Basics)
+
+#+LATEX: \captionof{listing}{Using Macros or Const Integers}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  #define RED 0
+  const int GREEN = 1;
+
+    using namespace std;
+
+  void FillColor(int color) {
+      // Fill background with some color
+      if (color == 0) {
+    // paint with red
+      }
+      else if(color == 1) {
+    // paint with green
+      }
+  }
+  int main() {
+      
+      FillColor(RED);
+      FillColor(GREEN);
+      FillColor(6); //!!!
+      
+      return 0;
+  }
+  #+END_SRC
+
+  *Enumerated Type*
+  - Type created throuhg /enum/ keyword
+  - Created with restricted range of values, called symbolic constants
+    or enumertors
+  - Enumerators are internally represented as undefined integral types
+  - Can implicitly convert to an integer, but not the other way round
+  - Default value start from 0, but users can assign any value
+  - Enumerators are visible in the scope in which they're defined
+
+    /enum Color(Red, Green, Blue);/
+    /Color c = Red;/
+    /c = 1;  \//Compiler error, use static_cast to convert/
+    /c = static_cast<Color>(1);/
+    /int x = Green; \//x will contain 1/
+    
+** TODO ENUMS - Part II (Scoped Enums C++11)
+
+** TODO Strings - Part I (Raw Strings)
+
+** TODO Strings - Part II (std::strings)
+
+** Assignment I
+
+** Strings - Part III (String Streams)
+
+** TODO User-Defined Literals
+
+** Constant Expression - constexpr
+
+** TODO std::initializer_list (C++11)
+
+** TODO Dynamic Array (std::vector)
+
+** TODO Assignment III
+
+** TODO Union - I
+
+** TODO Union - II
+

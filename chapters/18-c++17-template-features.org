@@ -1,0 +1,430 @@
+
+* C++17 Template Features
+
+** Class Template Argument Deduction (CTAD)
+
+
+** Class Template Argument Deduction (CTAD)
+
+- Template argument deduction is a process by which a compiler deduces the types
+- Until C++14, this worked only with functions and not classes
+- Consequently, to create instances of classe with multiple template
+  arguments, we had to resort to make_functions e.g. /make_pair/
+- With C++17, the decuction works with class templates as well
+- This feature is called *Class Template Argument Deductio*n or *CTAD*
+- There are two types
+  - Compiler generated
+  - User defined
+- Works with direct or copy initialization of objects or objects on heap
+
+#+LATEX: \captionof{listing}{CTAD Class Template Argument Deduction }
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <mutex>
+#include <vector>
+
+template<typename T>
+class Data {
+public:
+    Data(const T &t) {
+                
+    }
+};
+
+// Deduction Specification
+Data(const char *) -> Data<std::string> ;
+Data(int)->Data<long> ;
+
+int main() {
+
+    Data d1{5} ;
+    Data d2{8.2f} ;
+
+    Data d3 = d1 ;
+    auto d4 = new Data{"Hello"} ;
+
+    Data d5{"Hello"} ;
+
+    Data d6{5} ;
+        
+    std::pair<int,int> p1{2,5} ;
+    auto p2 = std::make_pair(2,5) ;
+
+    std::pair p3{2,5} ;
+    std::vector v1{1,2,3,4} ;
+
+    std::mutex m ;
+    std::lock_guard lck{m} ;
+        
+}
+#+END_SRC
+
+
+** Folding Basics
+
+- It is a process that applies a binary operator to a list of values recursively
+- The results are combined recursively, taht builds up the final result
+- This process is calles as folding
+- In C++11 Variadic templates can perform folds over a template parameter pack
+- However, it requires overloads with recursion
+  - needs to unpack the parameter for processing
+
+#+LATEX: \captionof{listing}{C++11 Folding with Variadic Template }
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+auto Sum() {
+    return 0 ;
+}
+template<typename T, typename ...Args>
+auto Sum(T a, Args...args) {
+    return a + Sum(args...) ;
+}
+/*
+ ,* Sum(1,2,3,4,5) ;
+ ,* return 1 + Sum(2,3,4,5) ;
+ ,* return 2 + Sum(3,4,5) ;
+ ,* return 3 + Sum(4,5) ;
+ ,* return 4 + Sum(5) ;
+ ,* return 5 + Sum() ;
+ ,* return 5 + 0 ;
+ ,*
+ ,*  1 + (2 + (3 + (4 + (5 + 0))))
+ ,*  1 + (2 + (3 + (4 + 5)))
+ ,*  1 + (2 + (3 + 9))
+ ,*  1 + (2 + 12)
+ ,*  1 + 14
+ ,*  15
+ ,* 
+ ,*/
+
+
+int main() {
+    auto result = Sum(1,2,3,4,5) ;
+    std::cout << result << std::endl;
+}
+#+END_SRC
+
+#+RESULTS:
+: 15
+
+
+** Fold Expressions - Unary Folds
+
+- C++17 offers a new way to unpack variadic parameters with binary operators
+- This is called as *fold expression*
+- A fold expression reduces (folds) a parameter pack over a binary operator
+- This is a compact syntaxl for applying binary operations to the
+  elements of a parameter pack
+- Simplifies implementation of variadic templates that have to apply
+  binary operators on a parameter pack
+
+  | *Fold Expression*       |                   |
+  | /(pack op ...)/         | unary right fold  |
+  | /(... pack op )/        | unary left fold   |
+  | /(pack op ... op init)/ | binary left fold  |
+  | /(init op ... pack op)/ | binary right fold |
+  
+
+#+LATEX: \captionof{listing}{Folding Expressions - Unary Folds}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+template<typename...Args>
+auto Sum2(Args...args) {
+    //return (args + ...) ;        //Unary right fold
+    return (... + args) ;          //Unary left fold
+}
+
+/*
+ ,* Unary Right Fold
+ ,* Sum2(1,2,3,4,5)
+ ,* (1 +(2 + (3 + (4 + 5))))
+ ,*
+ ,* Unary Left Fold
+ ,* ((((1 + 2) + 3) + 4) + 5)
+ ,*/
+
+int main() {
+    auto result = Sum2(1,2,3,4,5) ;
+    std::cout << result << std::endl;
+
+}
+#+END_SRC
+
+#+RESULTS:
+: 15
+
+
+
+** Fold Expressions - Binary Folds
+
+#+LATEX: \captionof{listing}{Folding Expressions - Binary Folds}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+template<typename...Args>
+auto Sum3(Args...args) {
+    //return (0 + ... + args) ;   //Binary left fold
+    return (args + ... + 0) ;     //Binary right fold
+}
+/*
+ ,* Binary Right fold
+ ,* 1 + (2 + (3 + (4 + (5 + 0))))
+ ,*
+ ,* Binary Left Fold
+ ,* (((((0+1)+2) + 3) + 4) + 5)
+ ,*/
+
+/*
+  + - * / % ^ & | = < > << >> += -
+  = *= /= %= ^= &= |= <<= >>= == != <= >= && || , .* ->*
+
+  &&          - true
+  ||          - false
+  ,           - void()
+  Others      - ill-formed
+,*/
+
+template<typename...Args>
+bool AnyOf(Args...args) {
+    return (... || (args % 2 == 0)) ;
+}
+template<typename...Args>
+bool AllOf(Args...args) {
+    return (... && (args % 2 == 0)) ;
+}
+
+template<typename...Args, typename Predicate>
+bool AnyOf2(Predicate p, Args...args) {
+    return (... || p(args)) ;
+} 
+
+int main() {
+    auto result = Sum3() ;
+    // auto result = Sum3(1,2,3,4,5) ;
+    std::cout << result << std::endl;
+
+    std::cout << std::boolalpha ;
+    std::cout << "Any even?" << AnyOf(10,3,5) << std::endl; 
+    std::cout << "All even?" << AllOf(10,30,52) << std::endl;
+
+    std::cout << "Any even?" << AnyOf2([](int x){return x % 2 == 0;},10,3,5) << std::endl; 
+
+
+    
+}
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+
+#+LATEX: \captionof{listing}{Folding Expressions - Binary Fold Operators}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+/*
+  + - * / % ^ & | = < > << >> += -
+  = *= /= %= ^= &= |= <<= >>= == != <= >= && || , .* ->*
+
+  &&          - true
+  ||          - false
+  ,           - void()
+  Others      - ill-formed
+,*/
+
+template<typename...Args>
+bool AnyOf(Args...args) {
+    return (... || (args % 2 == 0)) ;
+}
+template<typename...Args>
+bool AllOf(Args...args) {
+    return (... && (args % 2 == 0)) ;
+}
+
+template<typename...Args, typename Predicate>
+bool AnyOf2(Predicate p, Args...args) {
+    return (... || p(args)) ;
+} 
+
+int main() {
+
+    std::cout << std::boolalpha ;
+    std::cout << "Any even?" << AnyOf(10,3,5) << std::endl; 
+    std::cout << "All even?" << AllOf(10,30,52) << std::endl;
+    std::cout << "Any even?" << AnyOf2([](int x){return x % 2 == 0;},10,3,5) << std::endl; 
+}
+#+END_SRC
+
+#+RESULTS:
+: Any even?true
+: All even?true
+: Any even?true
+
+
+
+** Fold Expressions - Recap
+
+[[https://cppinsights.io/][Analyzing C++ with CPPINSIGHTS.IO]]
+
+
+** Type Traits Suffixes
+
+- New Type Traits
+  - is_reference_v
+  - remove_reference_t
+  - is_floating_point_v
+  - is_default_constructible_v
+
+
+#+LATEX: \captionof{listing}{Type Traits Suffixes}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <type_traits>
+template<typename T>
+T Divide(T a, T b) {
+    if(std::is_floating_point_v<T> == false) {
+        std::cout << "Use floating point types only\n" ;
+        return 0 ;
+    }
+    return a / b ;
+}
+template<typename T>
+void Check(T &&) {
+    std::cout << std::boolalpha ;
+    std::cout << "Is reference?" << std::is_reference_v<T> << std::endl ;
+    std::cout << "After removing:" << 
+        std::is_reference_v<typename std::remove_reference_t<T>> << std::endl; 
+}
+class Number {
+    int m_Number ;
+public:
+    Number()=default ;
+    Number(int x):m_Number{x} {
+                
+    }
+};
+int main() {
+    static_assert(std::is_default_constructible_v<Number>, "Only objects with default constructor can be deserialized") ;
+    Check(5) ;
+    int value{} ;
+    Check(value) ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Is reference?false
+: After removing:false
+: Is reference?true
+: After removing:false
+
+
+** If constexpr - I
+
+*Compile-Time if*
+- This feature allows the condition of an if statement to be evaluated at compile time
+- It also discards branches of an /if/ statement at *compile-time*
+
+  /if constexpr(condition)/
+
+- The expression condition must be a constant condition and it should
+  be possible to be evaluate it at compile-time.
+
+- Can be used in template / non-template functions
+
+- Only the block that follows the true condition is evaluated; the
+  else blocks become discarded statements
+
+- Note that the discarded statements must be still valid statements
+
+- It also work with initialization inside if constexpr and runtime if statements
+
+- if constexpr can be used only inside functions, not outside
+  
+#+LATEX: \captionof{listing}{If constexpr I}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <type_traits>
+
+template<typename T>
+void Print(const T& value) {
+    if constexpr (std::is_pointer_v<T>) {
+        std::cout << *value << std::endl;
+    }
+    else if constexpr(std::is_array_v<T>) {
+        for (auto v : value) {
+            std::cout << v << ' ';
+        }
+    }
+    else {
+        std::cout << value << std::endl;
+    }
+}
+
+
+int main() {
+    int value {5};
+    Print(&value);
+    int arr[] = { 1,2,3,4,5 };
+    Print(arr);    
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+** If constexpr - II
+
+#+LATEX: \captionof{listing}{If constexpr II}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <type_traits>
+
+template<typename T>
+void Print(const T& value) {
+    if constexpr (std::is_pointer_v<T>) {
+        std::cout << *value << std::endl;
+    }
+    else if constexpr(std::is_array_v<T>) {
+        for (auto v : value) {
+            std::cout << v << ' ';
+        }
+    }
+    else {
+        std::cout << value << std::endl;
+    }
+}
+
+template<typename T>
+std::string ToString(T value) {
+    if constexpr (std::is_arithmetic_v<T>){
+        return std::to_string(value) ;
+    }else {
+        return std::string{value} ;
+    }
+}
+void CheckMode() {
+    if constexpr (sizeof(void *) == 4) {
+        std::cout << "32-bit\n" ;
+    }else if constexpr (sizeof(void *) == 8) {  // Evaluates to true at compile time
+        std::cout << "64-bit\n" ;
+    }else {
+        std::cout << "Unknown mode\n" ;
+    }
+}
+int main() {
+    CheckMode() ;  
+        
+    int value{ 5 };
+    auto s = ToString(value) ;
+    Print(s) ;
+}
+#+END_SRC
+
+#+RESULTS:
+: 64-bit
+: 5
+

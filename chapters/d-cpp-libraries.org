@@ -1,0 +1,202 @@
+* C++ Library Comparision 
+
+** Overview
+
+The following libraries are among the most widely used C++ libraries for
+Windows development, cross-platform applications, networking, and
+general-purpose programming.
+
+| Library | Purpose | Main Features | Typical Use Cases | Status |
+|----------+---------+---------------+-------------------+-------------|
+| ATL      | Windows COM programming | COM objects, ActiveX, smart pointers, registry support | COM servers, Windows shell extensions, legacy Windows applications | Mature, Windows-only |
+| WTL      | Windows GUI framework | Lightweight wrappers around Win32, window classes, dialogs, controls | Native Windows desktop applications | Mature, Windows-only |
+| Boost    | General-purpose C++ libraries | Smart pointers, threading, filesystem, regex, networking, containers, metaprogramming | Virtually any C++ application | Very active |
+| POCO     | Cross-platform application framework | Networking, HTTP, JSON, XML, logging, database access, threading | Network servers, IoT, backend services | Active |
+| ACE      | Distributed and networked systems | Networking, concurrency, IPC, reactor/proactor patterns | Telecommunications, embedded systems, real-time applications | Mature, less active |
+
+** ATL (Active Template Library)
+
+Developed by Microsoft, ATL simplifies writing COM-based software.
+
+*** Strengths
+
+- COM and ActiveX support
+- Efficient template-based implementation
+- Small runtime overhead
+- Excellent integration with Windows APIs
+
+*** Weaknesses
+
+- Windows only
+- Primarily useful for COM development
+- Less relevant for modern C++ unless maintaining legacy software
+
+** WTL (Windows Template Library)
+
+WTL builds on ATL and provides a lightweight GUI framework.
+
+*** Strengths
+
+- Thin wrapper around the Win32 API
+- Faster and smaller than frameworks like MFC
+- Native Windows look and feel
+- No large runtime
+
+*** Weaknesses
+
+- Windows only
+- Limited documentation compared to larger frameworks
+- No cross-platform support
+
+** Boost
+
+Boost is the largest collection of peer-reviewed C++ libraries and has
+heavily influenced the C++ standard.
+
+*** Popular Components
+
+- Smart pointers
+- Filesystem
+- Threading
+- Asio (networking)
+- Regex
+- Serialization
+- Program Options
+- Containers
+- Graph algorithms
+
+Many Boost libraries eventually become part of the ISO C++ standard,
+including smart pointers, filesystem, optional, variant, and shared_mutex.
+
+*** Strengths
+
+- Extremely comprehensive
+- High quality
+- Cross-platform
+- Well tested
+
+*** Weaknesses
+
+- Large and sometimes complex
+- Long compile times
+- Template-heavy code can produce difficult compiler diagnostics
+
+** POCO (Portable Components)
+
+POCO provides a cohesive framework for building cross-platform applications,
+particularly network services.
+
+*** Main Modules
+
+- HTTP/HTTPS
+- TCP/UDP networking
+- JSON
+- XML
+- Logging
+- Configuration
+- SQLite/MySQL/PostgreSQL connectors
+- ZIP compression
+- Cryptography
+- Multithreading
+
+*** Strengths
+
+- Clean object-oriented API
+- Cross-platform
+- Excellent for server applications
+- Easier to learn than Boost
+
+*** Weaknesses
+
+- Smaller ecosystem than Boost
+- Less low-level flexibility
+
+** ACE (Adaptive Communication Environment)
+
+ACE is a mature framework focused on high-performance distributed systems.
+
+*** Main Features
+
+- Socket abstraction
+- Multithreading
+- Synchronization
+- Timers
+- IPC
+- Event demultiplexing
+- Reactor and Proactor design patterns
+- Service configurator
+
+*** Strengths
+
+- Excellent for high-performance networking
+- Mature and stable
+- Designed for mission-critical systems
+
+*** Weaknesses
+
+- Steep learning curve
+- Older coding style
+- Large codebase
+- Less commonly used in new projects
+
+** Quick Comparison
+
+| Feature            | ATL       | WTL       | Boost       | POCO         | ACE                |
+|--------------------+-----------+-----------+-------------+--------------+--------------------|
+| Cross-platform     | No        | No        | Yes         | Yes          | Yes                |
+| GUI                | Limited   | Yes       | No          | No           | No                 |
+| Networking         | Minimal   | No        | Yes (Asio)  | Yes          | Yes                |
+| Database           | No        | No        | Limited     | Yes          | Limited            |
+| HTTP/REST          | No        | No        | Partial     | Yes          | Limited            |
+| COM support        | Yes       | Via ATL   | No          | No           | No                 |
+| Modern C++ style   | Moderate  | Moderate  | Excellent   | Good         | Older              |
+| Learning curve     | Medium    | Medium    | High        | Medium       | High               |
+| Typical domain     | COM       | Win32 UI  | General C++ | Servers, IoT | Telecom, Real-time |
+| License            | Microsoft | Microsoft | Boost       | Boost        | DOC (ACE)          |
+| Active development | Low       | Low       | Very active | Active       | Maintenance        |
+
+** Recommendation for Modern Development
+
+- *Boost* is the de facto standard collection of modern C++ libraries. It
+  provides high-quality, portable components covering everything from smart
+  pointers and containers to networking (Asio), serialization, and
+  metaprogramming. Many Boost libraries have been adopted into the ISO C++
+  standard, making it an excellent foundation for almost any C++ project.
+
+- *POCO* is ideal when developing cross-platform applications that need
+  networking, HTTP/REST services, JSON/XML parsing, logging, configuration
+  management, or database access. Its APIs are more cohesive and
+  object-oriented than Boost's, making it easier to learn for application
+  developers.
+
+- *ATL* remains the preferred choice for developing or maintaining Windows
+  COM components, shell extensions, ActiveX controls, and other technologies
+  tightly coupled to the Windows platform. It is generally not used for new
+  cross-platform projects.
+
+- *WTL* is a lightweight alternative to MFC for native Win32 desktop
+  applications. It produces small, efficient executables while retaining the
+  native Windows look and feel. It is well suited for Windows utilities and
+  engineering tools but is limited to the Windows ecosystem.
+
+- *ACE* is primarily found in long-lived, mission-critical systems such as
+  telecommunications, aerospace, defense, industrial automation, and
+  real-time embedded applications. Although its design patterns (Reactor,
+  Proactor, Acceptor-Connector) remain influential, new projects often
+  prefer Boost.Asio or standalone Asio because they offer a more modern C++
+  interface and broader community support.
+
+* Practical Guide
+
+| If you are building... | Recommended library |
+|------------------------+---------------------|
+| Modern portable C++ software | Boost |
+| Network servers or REST services | POCO (or Boost.Asio) |
+| Native Windows desktop applications | WTL |
+| COM or Windows shell extensions | ATL |
+| Legacy telecom or real-time systems | ACE |
+
+Boost and POCO are the libraries most commonly selected for new
+cross-platform development. ATL and WTL remain highly relevant for
+Windows-specific software, while ACE is mainly encountered when
+maintaining or extending existing high-performance distributed systems.

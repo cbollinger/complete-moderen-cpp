@@ -1,0 +1,599 @@
+
+* File Input & Output
+
+** Raw String Literals
+
+#+LATEX: \captionof{listing}{Raw String Literals}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int main() {
+
+    string filename{ R"(~/Daten/01-tutorial/Modern-CPP/chapters/11-file-io.org)" };
+    cout << filename << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: ~/Daten/01-tutorial/Modern-CPP/chapters/11-file-io.org
+
+#+LATEX: \captionof{listing}{Raw String Literals with Delemiter}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int main() {
+
+    string message { R"MSG(C++ introduced filesystem API in "C++17")MSG" };
+    cout << message << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: C++ introduced filesystem API in "C++17"
+
+allows to include " and ' within the string without terminating it.
+
+
+** Introduction to Filesytem Library 
+
+#+LATEX: \captionof{listing}{Directory Iterator}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <filesystem>
+
+using namespace std;
+using namespace filesystem;
+
+int main() {
+
+    path p { R"(/home/christian/Daten/01-tutorial/Modern-CPP/chapters/11-file-io.org)" };
+    if(p.has_filename()) {
+        cout << p.filename() << endl;
+        cout << p.remove_filename() << endl;
+    }
+    cout << endl;
+    for(const auto &x : p) {  //usage of iterators (begin/end)
+        cout << x << endl;
+    }
+    cout << endl;
+
+    p = p.remove_filename();
+    directory_iterator beg {p};
+    directory_iterator end { };
+    if(p.is_absolute()) {
+        while(beg != end) {
+            cout << *beg << endl;
+            ++beg;
+        }
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+"11-file-io.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/"
+
+"/"
+"home"
+"christian"
+"Daten"
+"01-tutorial"
+"Modern-CPP"
+"chapters"
+""
+
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/.#11-file-io.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/c-document-setup-improvements.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/04-class-objects.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/b-org-mode-simulate-keyboard-input.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/08-more-cpp-goodies.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/01-introduction.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/06-operator-overloading.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/09-object-oriented-programming.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/07-memory-management.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/11-file-io.org~"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/11-file-io.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/05-new-move-sementic.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/03-memory-management.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/05-move-semantic.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/a-used-compiler-flags.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/02-basic-language-facilities.org"
+"/home/christian/Daten/01-tutorial/Modern-CPP/chapters/10-exception-handling.org"
+#+end_example
+
+
+** File I/O - Part I (Basics)
+
+- C++ provides support for file I/O through following classes
+  - /ofstream/ - wite to an output stream 
+  - /ifstream/ - read from an input stream
+  - /fstream/ - write/read stream
+- Include /fstream/ header
+- All classes can be used for both text & binary I/O
+- Additionally, they support modes that decide how the file is opened and operated
+  - /is_open()/ to check if a stream is open
+
+*Stream Class Typedefs*
+- *ios:* contains the state that is common fo all the stream classes such as
+  - File open modes
+  - formatting flags
+- *istream & ostream:* Used for console input-output
+- *ifstream & ofstream:* Used for File input-output, whereas the *fstream*
+  class is a convenient class for read-write at the same time
+- *istringstream & ostringsream:* Used for reading from and writing to a buffer, whereas the *stringtream*
+  class is a convenient class for read-write at the same time.
+
+
+*File Open Modes*
+- the following modes can be used while opening a file
+- These are constants defined in std::ios_base class
+- Some modes can be compined e.g. /std::ios::in | std::ios::out/ etc,
+  for read write at the same time
+
+  - /app/ seek to the end before each write operation
+  - /binary/ open in binary mode
+  - /in/ open for reading (default)
+  - /out/ open for writing
+  - /trunc/ discard file contents before openeing
+  - /ate/ seek to end after open
+  
+  
+#+LATEX: \captionof{listing}{Basic Input Output}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+void Write() {
+    std::ofstream out;     // {"data.txt"};
+    out.open("data");       // open instead of using the constructor 
+    out << "Hello world" << std::endl;
+    out << 10 << std::endl; 
+    out.close();
+}
+void Read() {
+    std::ifstream input;     // { "data.txt" };
+    input.open("data.txt");  // open instead of using the constructor 
+    std::string message;
+    std::getline(input, message);
+    int value{};
+    input >> value;
+    input.close();
+    std::cout << message << ":" << value << std::endl; 
+}
+int main() {
+    Write();
+    Read();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Hello world:10
+
+
+** File I/O - Part II (Error Handling)
+
+#+LATEX: \captionof{listing}{File open test}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+void Write() {
+    std::ofstream out;     // {"data.txt"};
+    out.open("data");       // open instead of using the constructor 
+    out << "Hello world" << std::endl;
+    out << 10 << std::endl; 
+    out.close();
+}
+void Read() {
+    std::ifstream input;     // { "data.txt" };
+    input.open("data.txt");  // open instead of using the constructor
+    if (!input.is_open()) {
+        std::cout << "Could not open the file" << std::endl;
+        return;
+    }
+    std::string message;
+    std::getline(input, message);
+    int value{};
+    input >> value;
+    input.close();
+    std::cout << message << ":" << value << std::endl; 
+}
+int main() {
+    Write();
+    Read();
+    return 0;
+}
+#+END_SRC
+
+
+*Stream State Flags*
+- The exlamation operator ! is overloaded to check for the /failbit/
+  - /goodbit/ no error /boo good()/
+  - /badbit/ irrecoverable stream /boo bad()/
+  - /failbit/ I/O operation failed /boo fail() [operator !]/
+  - /eofbit/ end of file reached during input /bool eof()/
+
+#+LATEX: \captionof{listing}{Error Handling}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+void Write() {
+    std::ofstream out;     // {"data.txt"};
+    out.open("data");       // open instead of using the constructor 
+    out << "Hello world" << std::endl;
+    out << 10 << std::endl; 
+    out.close();
+}
+void Read() {
+    std::ifstream input;     // { "data.txt" };
+    input.open("data.txt");  // open instead of using the constructor
+    if (input.fail()) {
+        std::cout << "Could not open the file" << std::endl;
+        return;
+    }
+    std::string message;
+    std::getline(input, message);
+    int value{};
+    input >> value;
+    input >> value;
+    if (input.eof()) {
+        std::cout << "End of file encountered" << std::endl;
+    }
+    if (input.good()) { // test with a none existing file
+        std::cout << "I/O operations are successful" << std::endl;
+    }
+    else {
+        std::cout << "Some I/O operations failed" << std::endl;
+    }
+    input.close();
+    input.clear();                      // sets the good bit and resets all other states
+    input.setstate(std::ios::failbit);  // sets failbit
+    std::cout << message << ":" << value << std::endl; 
+}
+int main() {
+    Write();
+    Read();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: End of file encountered
+: Some I/O operations failed
+: Hello world:10
+
+
+** File I/O - Part III (Copy Utility)
+
+#+LATEX: \captionof{listing}{Copy Text File}
+#+BEGIN_SRC C++ :tangle ../projects/section-11/cputil/Source.cpp :mkdirp yes :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <string>
+
+using namespace std;
+using namespace filesystem;
+
+int main() {
+    // set curren_path to project path
+    path project(current_path());
+    project /= "../projects/section-11/cputil";
+    current_path(project);
+
+    path source(current_path());
+    source /= "Source.cpp";
+
+    path dest(current_path());
+    dest /= "Copy.cpp";
+
+    ifstream input{ source };
+    if(!input) {
+        cout << "Source file not found" << endl;
+    }
+
+    ofstream output { dest };
+    string line;
+    while(!getline(input, line).eof()) {
+        output << line << endl;
+    }
+    input.close();
+    output.close();
+
+    cout << "all file operations done..." << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: all file operations done...
+
+
+** File I/O - Part IV (Character IO & Seeking)
+
+#+LATEX: \captionof{listing}{Reading and Writing Characters}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
+
+using namespace std;
+using namespace filesystem;
+
+void Write(const filesystem::path& project) {
+    current_path(project);
+    
+    std::ofstream out {"test.txt"};
+    if(!out) {
+        out << "Could not open file for writing" << endl;
+        return;
+    }
+    string message{"C++ was invented by Bjarne"};
+
+    // write character per character. 
+    for(char ch : message) {
+        out.put(ch);
+    }
+    
+}
+void Read(const filesystem::path& project) {
+    current_path(project);
+
+    std::ifstream input {"test.txt"};
+    if (!input.is_open()) {
+        cout << "Could not open the file reading" << endl;
+        return;
+    }
+
+    char ch{};
+    while (input.get(ch)) {
+        cout << ch;
+    }
+        
+}
+int main() {
+    // set current path
+    path project(current_path());
+    project /= "../projects/section-11/cputil";
+    current_path(project);
+
+    Write(project);
+    Read(project);
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: C++ was invented by Bjarne
+
+The input and output streams have a pointer internally, the pointer
+represents the position at which the operation will be performed in the file.
+
+- *Output streams:* this pointer is known as the *put pointer*.
+- *Input streams:* this pointer is known as the *get pointer*.
+
+#+LATEX: \captionof{listing}{Placing put- and get pointer}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
+
+using namespace std;
+using namespace filesystem;
+
+void Write(const filesystem::path& project) {
+    current_path(project);
+    
+    std::ofstream out {"test.txt"};
+    if(!out) {
+        out << "Could not open file for writing" << endl;
+        return;
+    }
+    string message{"C++ was invented by Bjarne"};
+
+    // write character per character. 
+    for(char ch : message) {
+        out.put(ch);
+    }
+    out.seekp(20, ios::beg);
+    out.put('#');
+}
+void Read(const filesystem::path& project) {
+    current_path(project);
+
+    std::ifstream input {"test.txt"};
+    if (!input.is_open()) {
+        cout << "Could not open the file reading" << endl;
+        return;
+    }
+    input.seekg(10, ios::beg);
+    cout << "Current position is: " << input.tellg() << endl;
+    char ch{};
+    while (input.get(ch)) {
+        cout << ch;
+    }   
+}
+int main() {
+    path project(current_path());
+    project /= "../projects/section-11/cputil";
+    current_path(project);
+
+    Write(project);
+    Read(project);    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Current position is: 10
+: vented by #jarne
+
+fstream does not create a file if it does not exist.
+
+#+LATEX: \captionof{listing}{Using fstream classx}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
+
+using namespace std;
+using namespace filesystem;
+
+void UsingFstream(const filesystem::path& project) {
+    current_path(project);
+    fstream stream("file.txt");
+    if(!stream) {
+        cout << "FILE DOES NOT EXIST, CREATING ONE..." << endl;
+        ofstream out("file.txt");
+        out.close();
+        stream.open("file.txt");
+    }
+    stream << "Hello World" << endl;;
+    stream.seekg(0);   // set get pointer to 0
+    string line;
+    getline(stream, line);
+    cout << line << endl;
+}
+int main() {
+    path project(current_path());
+    project /= "../projects/section-11/cputil";
+    current_path(project);
+
+    UsingFstream(project);
+    project /= "file.txt";
+    // remove(project);
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Hello World
+
+
+** File I/O - Part V (Binary IO)
+
+A binary file stores data in it's equivalent binary form. If you open
+a binary file in a text editor, it will contain non-human readable
+characters.
+
+#+LATEX: \captionof{listing}{Binary Files}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
+
+using namespace std;
+using namespace filesystem;
+
+int main() {
+    // set current path
+    path project(current_path());
+    project /= "../projects/section-11/cputil";
+    current_path(project);
+
+    ofstream textstream {"data"};
+    textstream << 12345678;
+
+    ofstream binstream("binary", ios::binary | ios::out);
+    int num{12345678};
+    binstream.write((const char*)&num, sizeof(num));
+
+    cout << "data and binary filed to ../projects/section-11/cputil" << endl;
+    cout << "binary is stored as little endian 0xBC614E becomes 0x4E61BC" << endl;
+
+    num = 0;
+    binstream.close();
+    ifstream input{ "binary", ios::binary | ios::in};
+    input.read((char*)&num, sizeof(num));
+    cout << num << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: data and binary filed to ../projects/section-11/cputil
+: binary is stored as little endian 0xBC614E becomes 0x4E61BC
+: 12345678
+
+#+LATEX: \captionof{listing}{Record}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
+
+using namespace std;
+using namespace filesystem;
+
+struct Record {
+    int id;
+    char name[10];
+};
+
+void WriteRecord(const filesystem::path &project, Record *p) {
+    current_path(project);
+    
+    ofstream binstream{"records", ios::binary | ios::out };
+    binstream.write((const char*)p, sizeof(Record));
+}
+
+Record ReadRecord(const filesystem::path &project) {
+    current_path(project);
+
+    ifstream input {"records", ios::binary | ios::in };
+    Record r;
+    input.read((char*)&r, sizeof(Record));
+    return r;
+}
+
+int main() {
+    // set current path
+    path project(current_path());
+    project /= "../projects/section-11/cputil";
+    current_path(project);
+
+    Record r1 {1963, "Christian"};
+    WriteRecord(project, &r1);
+    Record r2 = ReadRecord(project);
+    
+    cout << "id: " << r2.id << ", name: " << r2.name << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: id: 1963, name: Christian
+
+*Store Multiple Records*
+- Save to File: Store the total number or records stored in the file
+- Read back: Firs read how many records are stored and then read the
+  records accordingly.
+
+
+#+ATTR_LATEX: :options {Binary Files}
+#+BEGIN_infobox
+Do not have enf of file character in them.
+Therfore the sturcture of the file is important to know.
+#+END_infobox
+

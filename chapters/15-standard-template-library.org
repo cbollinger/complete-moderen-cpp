@@ -1,0 +1,130 @@
+
+* Standard Template Library
+
+
+#+ATTR_LATEX: :options {Remark}
+#+BEGIN_infobox
+These videos have all been watched but the details are better looked
+up in cppreference.com or TC++PL as to reproduce everything here.
+#+END_infobox
+
+
+** Introduction
+
+- Heart of the standard library for C++
+- Developed by Alexander Stepnov & Meng Lee at Hewlett Packard
+- Provides fas & reusable *containers* and *algorithms*
+- Relies heavily on templates; almost every component in the STL is a
+  template.
+
+*Core Components*
+- *Container* classes, *algorithms* & *iterators* form the core components of the STL
+- Container classes represent data & algorithms represent operations on the data
+- Iterators serve as the *glue* between containers and algorithms
+- Also include classes for *concurrency*, *random numbers*, *regular expressions*, *utilities*, etc.
+
+
+*Why use the STL*
+- Quicker development
+- Reliable
+- Portable
+- Efficient & fast
+- Accurate
+- Readable code
+- Lower maintenance cost
+
+*Container Types*
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>         | <40>          |
+| *Sequence*     | *Header*        |
+|--------------+---------------|
+| array        | <array        |
+| vector       | <vector>      |
+| list         | <list>        |
+| deque        | <deque>       |
+| forward_list | <forward_list |
+|              |               |
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>          | <40>   |
+| *Associative*   | *Header* |
+|---------------+--------|
+| set, multiset | <set>  |
+| map, multimap | <map>  |
+|               |        |
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>                              | <40>            |
+| *Unsorted*                          | *Header*          |
+|-----------------------------------+-----------------|
+| unordered_set; unordered_multiset | <unordered_set> |
+| unordered_mp; unordered_multimap  | <unordered_map> |
+
+
+*Common Functions*
+- default constructor
+- uniform initialization constructor
+- copy constructor
+- iterator constructor
+- size()
+- clear()
+- begin()
+- end()
+- default allocator
+  
+
+
+** std::array
+
+#+LATEX: \captionof{listing}{std::function Solve Problems}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <functional>
+
+using namespace std;
+
+int main() {
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: No target to invoke!
+: 8
+: is even: true
+
+
+** std::vector
+
+** std::deque
+
+** std::list std::forward_list (C++11)
+
+** std::set & std::multiset
+
+** std::map & std::multimap
+
+** Unordered Containers (C++11) - I
+
+** Unordered Containers (C++11) - II
+
+** std::hash (C++11)
+
+** Big O Notation & Performance of Conatainers
+
+** Algorithm - Part I
+
+** Algorithm - Part II
+
+** Container Changes in C++11 - I
+
+** Container Changes in C++11 - II
+
+** Container Changes in C++11 - III
+
+** Container Changes in C++11 - IV
+
+** Container Changes in C++11 - V
+

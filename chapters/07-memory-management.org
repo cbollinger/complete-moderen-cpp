@@ -1,0 +1,1060 @@
+* Memory Management - Part II
+
+** Integer Class
+
+#+LATEX: \captionof{listing}{Integer Class Declaration}
+#+BEGIN_SRC C++ :tangle ../projects/section-07/Integer/inc/integer.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+class Integer {
+    int *m_pInt;
+public:
+    Integer();                                  // Default constructor
+    Integer(int value);                         // Parameterized constructor
+    Integer(const Integer &obj);                // Copy constructor
+    Integer(Integer &&obj);                     // Move constructor
+    int GetValue()const;
+    void SetValue(int value);
+    ~Integer();
+    Integer & operator ++();                    // pre-increment operator
+    Integer operator ++(int);                   // post-increment operator
+    bool operator ==(const Integer &a)const;    // comparison
+    Integer & operator =(const Integer &a);     // Copy assignment
+    Integer & operator =(Integer &&a);          // Move assignment
+    Integer operator +(const Integer & a)const; // + operator
+
+    void operator ()();                         // Function Call Operator
+    explicit operator int();                    // Type Conversion Operator
+
+    // operator >> is decalred as friend of Integer Class
+    friend std::istream & operator >> (std::istream &input, Integer &a);
+};
+Integer operator +(int x, const Integer &y);
+std::ostream & operator <<(std::ostream & out, const Integer &a);
+std::istream & operator >> (std::istream &input, Integer &a);
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Constructors}
+#+BEGIN_SRC C++ :tangle ../projects/section-07/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "integer.h"
+#include <iostream>
+
+using namespace std;
+
+Integer::Integer() {                           // standard constructor
+    cout << "Integer()" << endl;
+    m_pInt = new int(0);
+}
+
+Integer::Integer(int value) {                  // paramterizied constructor
+    cout << "Integer(int)" << endl;
+    m_pInt = new int(value);
+}
+
+Integer::Integer(const Integer & obj) {        // copy constructor
+    cout << "Integer(const Integer&)" << endl;
+    m_pInt = new int(*obj.m_pInt);
+}
+
+Integer::Integer(Integer && obj) {             // move constructor  
+    cout << "Integer(int&&)" << endl;
+    m_pInt = obj.m_pInt;
+    obj.m_pInt = nullptr;
+}
+
+Integer::~Integer() {                        // destructor
+    cout << "~Integer()" << endl;
+    delete m_pInt;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Setter and Getter}
+#+BEGIN_SRC C++ :tangle ../projects/section-07/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+  int Integer::GetValue() const {
+    return *m_pInt;
+  }
+
+  void Integer::SetValue(int value) {
+    *m_pInt = value;
+  }
+  #+END_SRC
+
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Operator Overlaoding member functiosn}
+#+BEGIN_SRC C++ :tangle ../projects/section-07/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+Integer & Integer::operator++() { // ++a means a.operator++()
+    cout << "operator++()" << endl;
+    ++(*m_pInt);
+    return *this;  // the value a the address of this
+}
+
+Integer Integer::operator++(int) { // a++ means a.operator++(int)
+    cout << "operator++(int)" << endl;
+    Integer temp(*this);
+    ++(*m_pInt);
+    return temp;
+}
+
+bool Integer::operator==(const Integer & a) const { // c==a means c.operator==(a)
+    cout << "operator==(const Integer &) const" << endl;
+    return *m_pInt == *a.m_pInt;
+}
+
+Integer & Integer::operator=(const Integer & a) { // c=a means c.operator=(a)
+    cout << "operator=(const Integer &) const" << endl;
+    if (this != &a) {            // check for self assignemnt
+    delete m_pInt;
+    m_pInt = new int(*a.m_pInt);
+    }
+    return *this;
+}
+
+Integer & Integer::operator=(Integer && a) { // c=&&a means c.operator=(&&a)
+    cout << "operator=(Integer &&) const" << endl;
+    if (this != &a) {
+    delete m_pInt;
+    m_pInt = a.m_pInt;
+    a.m_pInt = nullptr;
+    }
+    return *this;
+}
+
+Integer Integer::operator+(const Integer & a) const { // c+a means c.operator+(a)
+    cout << "operator+(const Integer &) const" << endl;
+    Integer temp;
+    *temp.m_pInt = *m_pInt + *a.m_pInt; // *this->m_pInt
+    return temp;
+}
+
+void Integer::operator()() {
+    // cout << "operator()()" << endl;
+    cout << *m_pInt << endl; 
+}
+#+END_SRC
+  
+#+LATEX: \captionof{listing}{Integer Class Definition: Global Operator overloading}
+#+BEGIN_SRC C++ :tangle ../projects/section-07/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+Integer operator +(int x, const Integer &y) {
+    // cout << "operator+(int, const Integer)" << endl;
+    Integer temp;
+    temp.SetValue(x + y.GetValue());
+    return temp;
+}
+ostream & operator <<(ostream & out, const Integer &a) {
+    // cout << "operator <<(ostream &, const Integer &)" << endl;
+    out << a.GetValue();
+    return out;
+}
+istream & operator >> (istream &input, Integer &a) {
+    // cout << "operator >>(istream &, Integer &)" << endl;
+    int x;
+    input >> x;
+    // a.SetValue(x);  // SetValue() allows copy by value, no friend required
+    *a.m_pInt = x;     // access to private member of Integer Class.    
+    return input;
+}
+#+END_SRC
+
+
+** Raw Pointers
+
+- hard to read
+- hard to remember when to call delete and assign nullptr.
+
+#+LATEX: \captionof{listing}{Main CPP - Raw Pointers }
+#+BEGIN_SRC C++ :tangle ../projects/section-07/Integer/Integer-01/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+
+using namespace std;
+
+void DisplayValue(Integer *p) {
+    if(!p)
+    {
+    return;
+    }
+    cout << p->GetValue() << endl;
+}
+
+Integer * GetPointer(int value) {           // Factory function - create an instance of a class
+    Integer *p = new Integer {value};
+    return p;
+}
+
+void Operate(int value) {
+
+    Integer *p = GetPointer(value);
+
+    if(p == nullptr) {
+    p = new Integer {value};
+    }
+    p->SetValue(100);
+    DisplayValue(p);
+    delete p;
+    p = nullptr;
+    p = new Integer {};
+    ,*p = __LINE__;
+    DisplayValue(p);
+    delete p;
+
+}
+
+int main() {
+
+    Operate(5);
+    
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-07/Integer/Integer-01/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-07/Integer/Integer-01/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+100
+~Integer()
+Integer()
+Integer(int)
+operator=(Integer &&) const
+~Integer()
+31
+~Integer()
+#+end_example
+
+
+** std_unique_ptr
+
+- unique pointer has to be used when the underlying pointer does not have to be shared with other parts of the code
+
+#+LATEX: \captionof{listing}{Main CPP - Smart Pointers }
+#+BEGIN_SRC C++ :tangle ../projects/section-07/Integer/Integer-02/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+  #include <memory>
+
+  using namespace std;
+
+  void DisplayValue(Integer *p) {
+      if(!p)
+        return;
+      cout << p->GetValue() << endl;
+  }
+
+  Integer * GetPointer(int value) {           // Factory function - create an instance of a class
+      Integer *p = new Integer {value};
+      return p;
+  }
+
+  void Store(unique_ptr<Integer> &p) {
+      cout << "Storing data into a file: " << p->GetValue() << endl;
+  }
+
+  void Operate(int value) {
+
+      unique_ptr<Integer> p { GetPointer(value) } ; //unique pointer has explicit constructors
+      if(p == nullptr) {
+        // p = new Integer {value};
+        p.reset(new Integer {value} );
+      }
+      p->SetValue(100);
+      DisplayValue(p.get());   // get the underlying pointer
+      p.reset(new Integer {});
+      ,*p = __LINE__;
+      DisplayValue(p.get());
+      // Store(move(p));          // no copy of unique_ptr
+      Store(p);                   // passing by reference is ok.
+      ,*p = 200;
+  }
+
+  int main() {
+
+      Operate(5);      
+      return 0;
+  }
+#+END_SRC
+
+
+#+BEGIN_SRC makefile :tangle ../projects/section-07/Integer/Integer-02/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+
+
+
+#+BEGIN_SRC shell :dir ../projects/section-07/Integer/Integer-02/ :exports results :results output
+make run
+#+END_SRC
+
+
+#+RESULTS:
+#+begin_example
+./app
+Integer(int)
+100
+Integer()
+~Integer()
+Integer(int)
+operator=(Integer &&) const
+~Integer()
+35
+Storing data into a file: 35
+Integer(int)
+operator=(Integer &&) const
+~Integer()
+~Integer()
+#+end_example
+
+
+** Sharing Raw Pointer
+
+#+LATEX: \captionof{listing}{Shared raw pointer}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Project{
+      string m_Name;
+  public:
+      void SetName(const string &name) {
+    m_Name = name;
+      }
+      void ShowProjectDetails() const {
+    cout << "[Project Name] " << m_Name << endl;
+      }
+  };
+  class Employee {
+      Project *m_pProject {};
+  public:
+      void SetProject(Project *prj) {
+    m_pProject = prj;
+      }
+      const Project * GetProject() const {
+    return m_pProject;
+      }
+
+  };
+  void ShowInfo(Employee *emp) {
+      cout << "Employee project details: ";;;
+      emp->GetProject()->ShowProjectDetails();
+  }
+  int main() {
+      Project *prj = new Project {};
+      prj->SetName("Video Decoder");
+      Employee *e1 = new Employee {};
+      e1->SetProject(prj);
+      Employee *e2 = new Employee {};
+      e2->SetProject(prj);
+      Employee *e3 = new Employee {};
+      e3->SetProject(prj);
+      prj->ShowProjectDetails();
+      ShowInfo(e1); ShowInfo(e2); ShowInfo(e3);
+      delete prj; delete e1; delete e2; delete e3;
+      
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: [Project Name] Video Decoder
+: Employee project details: [Project Name] Video Decoder
+: Employee project details: [Project Name] Video Decoder
+: Employee project details: [Project Name] Video Decoder
+
+
+** Sharing std::unique_ptr
+
+The Requirement here is the Project pointer has to be shared with other projects.
+
+#+LATEX: \captionof{listing}{}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Project{
+      string m_Name;
+  public:
+      void SetName(const string &name) {
+    m_Name = name;
+      }
+      void ShowProjectDetails() const {
+    cout << "[Project Name] " << m_Name << endl;
+      }
+  };
+  class Employee {
+      unique_ptr<Project> m_pProject {};
+  public:
+      void SetProject(unique_ptr<Project> &prj) {
+    m_pProject = move(prj);                      // after move the underlaying pointer is not available anay more
+      }
+      const unique_ptr<Project>& GetProject() const {
+    return m_pProject;
+      }
+  };
+  void ShowInfo(const unique_ptr<Employee> &emp) {
+      cout << "Employee project details: ";;;
+      emp->GetProject()->ShowProjectDetails();
+  }
+  int main() {
+      unique_ptr<Project> prj { new Project };
+      prj->SetName("Video Decoder");
+      unique_ptr<Employee> e1 { new Employee };
+      e1->SetProject(prj);                         // the status of prj is lost, moved to m_pProject
+      unique_ptr<Employee> e2 { new Employee };
+      e2->SetProject(prj);
+      unique_ptr<Employee> e3 { new Employee };
+      e3->SetProject(prj);
+      
+      prj->ShowProjectDetails();
+      ShowInfo(e1); ShowInfo(e2); ShowInfo(e3);
+      
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+
+
+** Sharing std::shared_ptr
+
+The Requirement here is the Project pointer has to be shared with other projects.
+
+#+LATEX: \captionof{listing}{Sharing std::shared-ptr}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Project{
+      string m_Name;
+  public:
+      void SetName(const string &name) {
+    m_Name = name;
+      }
+      void ShowProjectDetails() const {
+    cout << "[Project Name] " << m_Name << endl;
+      }
+  };
+  class Employee {
+      shared_ptr<Project> m_pProject {};
+  public:
+      void SetProject(const shared_ptr<Project> &prj) {
+    m_pProject = prj; 
+      }
+      const shared_ptr<Project>& GetProject() const {
+    return m_pProject;
+      }
+  };
+  void ShowInfo(const shared_ptr<Employee> &emp) {
+      cout << "Employee project details: ";;;
+      emp->GetProject()->ShowProjectDetails();
+  }
+  int main() {
+      shared_ptr<Project> prj { new Project };
+      prj->SetName("Video Decoder");
+      shared_ptr<Employee> e1 { new Employee };
+      e1->SetProject(prj);                         // the status of prj is lost, moved to m_pProject
+      shared_ptr<Employee> e2 { new Employee };
+      e2->SetProject(prj);
+      shared_ptr<Employee> e3 { new Employee };
+      e3->SetProject(prj);
+      
+      cout << "Reference count: " << prj.use_count() << endl;
+      e3.reset();
+      cout << "Reference count: " << prj.use_count() << endl;
+      e3.reset(new Employee {});
+      e3->SetProject(prj);
+      cout << "Reference count: " << prj.use_count() << endl;
+      
+      ShowInfo(e1); ShowInfo(e2); ShowInfo(e3);
+      prj->ShowProjectDetails();
+        
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: Reference count: 4
+: Reference count: 3
+: Reference count: 4
+: Employee project details: [Project Name] Video Decoder
+: Employee project details: [Project Name] Video Decoder
+: Employee project details: [Project Name] Video Decoder
+: [Project Name] Video Decoder
+
+
+** Sharing Weak Ownership
+
+
+#+LATEX: \captionof{listing}{Weak Onwernship}
+#+BEGIN_SRC C++ :cmdline "<<< '11'" :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Printer {
+
+      shared_ptr<int> m_pValue {};
+
+  public:
+      void SetValue(shared_ptr<int> p) {
+    m_pValue = p;
+      }
+      void Print() { 
+    cout << "Ref count : " << m_pValue.use_count() << endl;
+    cout << "Value is: " << *m_pValue << endl;   // how to detetec if rosource is available?
+      }
+  };
+
+  int main() {
+
+      Printer prn;
+
+      int num {};
+      cin >> num;
+      shared_ptr<int> p {new int{num}};
+      prn.SetValue(p);
+
+      if(*p > 10) {
+    p = nullptr;     // delete the underlying resource 
+      }
+      
+      prn.Print();
+         
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: Ref Count : 1
+: Value is: 11
+
+
+
+** Sharing std::weak_ptr
+
+#+ATTR_LATEX: :options {Weak Pointer}
+#+BEGIN_infobox
+Weak Pointer helps us pointing weakly to a resource that may or may not be available.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{std::weak-ptr}
+#+BEGIN_SRC C++ :cmdline "<<< '63'" :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Printer {
+
+      weak_ptr<int> m_pValue {};
+
+  public:
+      void SetValue(weak_ptr<int> p) {
+    m_pValue = p;
+      }
+      void Print() {
+    if(m_pValue.expired()) {   // detect if resource is available or not!!!
+        cout << "Resource is no longer available" << endl;
+        return;
+    }
+    auto sp = m_pValue.lock();  // returns a shared pointer + inr. ref counter
+    cout << "Ref count : " << sp.use_count() << endl;
+    cout << "Value is: " << *sp << endl;
+      }
+  };
+
+  int main() {
+      Printer prn;
+      int num {};
+      cin >> num;
+      shared_ptr<int> p {new int{num}};
+      prn.SetValue(p);
+
+      if(*p > 10) {
+    p = nullptr;     // delete the underlying resource 
+      }
+     
+      prn.Print();       
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: Ref count : 2
+: Value is: 2
+
+
+** Circular References
+
+#+LATEX: \captionof{listing}{Circular References with Raw Pointers}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+    #include <iostream>
+    #include <memory>
+    #include <string>
+
+    using namespace std;
+
+    class Employee;
+
+    class Project{
+
+    public:
+        Employee * m_emp;
+        Project() {
+        cout << "Project()" << endl;
+        }
+        ~Project() {
+        cout << "~Project()" << endl;
+        }
+    };
+
+    class Employee {
+
+    public:    
+        Project * m_prj;
+        Employee() {
+        cout << "Employee()" << endl;
+        }
+        ~Employee() {
+        cout << "~Employee()" << endl;
+        }
+    };
+
+    int main() {
+          Project  *prj = new Project {};
+          Employee *emp = new Employee {};
+
+          emp->m_prj = prj;
+          prj->m_emp = emp;
+
+    delete emp;
+    delete prj;
+          
+        return 0;
+    }
+#+END_SRC
+
+#+RESULTS:
+: Project()
+: Employee()
+: ~Employee()
+: ~Project()
+
+
+#+LATEX: \captionof{listing}{Circular References with Shared Pointers}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+    #include <iostream>
+    #include <memory>
+    #include <string>
+
+    using namespace std;
+
+    class Employee;
+
+    class Project{
+
+    public:
+        shared_ptr<Employee> m_emp;
+        Project() {
+        cout << "Project()" << endl;
+        }
+        ~Project() {
+        cout << "~Project()" << endl;
+        }
+    };
+
+    class Employee {
+
+    public:    
+        shared_ptr<Project> m_prj;
+        Employee() {
+        cout << "Employee()" << endl;
+        }
+        ~Employee() {
+        cout << "~Employee()" << endl;
+        }
+    };
+
+    int main() {
+          shared_ptr<Project>  prj {new Project {}};
+          shared_ptr<Employee> emp {new Employee {}};
+
+          emp->m_prj = prj;
+          prj->m_emp = emp;
+
+        return 0;
+    }
+#+END_SRC
+
+#+RESULTS:
+: Project()
+: Employee()
+
+
+#+ATTR_LATEX: :options {Circualr References}
+#+BEGIN_infobox
+Leads to memory leaks, since boths shared pointers point to each other when functions goes out of scope (Reference cout 2).
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Circular References with Weak Pointer}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Employee;
+
+  class Project{
+
+  public:
+      shared_ptr<Employee> m_emp;
+      Project() {
+    cout << "Project()" << endl;
+      }
+      ~Project() {
+    cout << "~Project()" << endl;
+      }
+  };
+
+  class Employee {
+
+  public:    
+      weak_ptr<Project> m_prj;
+      Employee() {
+    cout << "Employee()" << endl;
+      }
+      ~Employee() {
+    cout << "~Employee()" << endl;
+      }
+  };
+
+  int main() {
+        shared_ptr<Project>  prj {new Project {}};
+        shared_ptr<Employee> emp {new Employee {}};
+
+        emp->m_prj = prj;
+        prj->m_emp = emp;
+
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: Project()
+: Employee()
+: ~Project()
+: ~Employee()
+
+
+** Deleter 
+
+#+ATTR_LATEX: :options {Deleter}
+#+BEGIN_infobox
+Allowing to manage resources that may not have been acquired using *new*.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{legacy code}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  int main() {
+      int * p = (int *) malloc(4);
+      *p = 100;
+      cout << *p << endl;
+      free(p);
+
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: 100
+
+#+LATEX: \captionof{listing}{smart poiner}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  int main() {
+      unique_ptr<int> p {(int*) malloc(4)};
+      *p = 100;
+      cout << *p << endl;
+
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: 100
+
+#+ATTR_LATEX: :options {Undefined Behaviour}
+#+BEGIN_infobox
+To release the memory malloc requires *free* but a smart pointer calls by default *delete*.
+As deleter callback any kind of callable could be used: functions, function objects or delegates.
+The prefered usage are function objects since function increase the size of the smart pointer object.
+#+END_infobox
+
+#+LATEX: \captionof{listing}{unique-ptr deleter callbak: deleter callbak}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  // defining a function object
+  struct Free {
+
+      // required to define function call operator
+      // argument is the type of pointer to be released
+      void operator()(int *p) {
+    free(p);
+    cout << "operator()(int *p)" << endl;
+      }
+  };
+  // argument is the type of pointer to be released
+  void MallocFree(int *p) {
+      free(p);
+      cout << "MallocFree(int *p)" << endl;
+  }
+  int main() {
+      // unique_ptr<int, Free> p {(int*) malloc(4), Free{}};              // function object
+      unique_ptr<int, void(*)(int *)> p {(int*) malloc(4), MallocFree};   // functions
+      ,*p = 100;
+      cout << *p << endl;
+      
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: 100
+: MallocFree(int *p)
+
+#+LATEX: \captionof{listing}{shared-ptr deleter callbak: deleter callbak}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  // defining a function object
+  struct Free {
+      // required to define function call operator
+      // argument is the type of pointer to be released
+      void operator()(int *p) {
+    free(p);
+    cout << "operator()(int *p)" << endl;
+      }
+  };
+  // argument is the type of pointer to be released
+  void MallocFree(int *p) {
+      free(p);
+      cout << "MallocFree(int *p)" << endl;
+  }
+  void UniquePtrDeleters() {
+      // unique_ptr<int, Free> p {(int*) malloc(4), Free{}};              // function object
+      unique_ptr<int, void(*)(int *)> p {(int*) malloc(4), MallocFree};   // functions
+      ,*p = 100;
+      cout << *p << endl;
+      // free(p);
+  }
+  void SharedPtrDeleters() {
+      shared_ptr<int> p {(int*) malloc(4), Free{}};              // function object
+      // shared_ptr<int> p {(int*) malloc(4), MallocFree};   // functions
+      ,*p = 100;
+      cout << *p << endl;
+      // free(p);
+  }
+  int main() {
+      SharedPtrDeleters();
+      
+      return 0;
+  }
+  #+END_SRC
+
+  #+RESULTS:
+  : 100
+  : operator()(int *p)
+
+
+** Dynamic Arrays
+
+#+LATEX: \captionof{listing}{Dynamic Array Problem}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <cstdlib>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+
+  int main() {
+
+  // Problem 1: default deleter calls delete and not delete[]
+      unique_ptr<int> p {new int [5] {1,2,3,4,5}};
+
+  // Problem 2: array syntax not available
+      // p[0] = 10;                 // not valid
+      p.get()[0] = 10;              // access is a bit unconvenient
+
+  // Problem 3: do not use dynamic array with shared_ptr
+
+      return 0;
+  }
+  #+END_SRC
+
+
+#+LATEX: \captionof{listing}{Dynamic Array - Smart Pointer Type Specialisation}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <cstdlib>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+
+  int main() {
+
+      // unique_ptr<int[]> p {new int [5] {1,2,3,4,5}};
+      shared_ptr<int[]> p {new int [5] {1,2,3,4,5}};   // use int[] as type
+      p[0] = 10;                 
+      
+      return 0;
+  }
+  #+END_SRC
+
+  
+
+\newpage
+** Make Functions
+
+ Modern C++ discourages manual memory management. We should avoid
+ using new and delete operators directly in our code, but if we want
+ to create a smart pointer we have to use new to allocate memory on
+ the heap.
+
+#+LATEX: \captionof{listing}{Make Functions Shared Pointer}
+#+BEGIN_SRC C++ :flags "-std=c++20 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <cstdlib>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Point {
+  public:
+      Point(int x, int y) {
+        cout << "Point(" << x << "," << y << ")" << endl;
+      }
+  };
+  int main() { // without using now to allocate resources for underlaying pointer
+      shared_ptr<int> p1{new int{5}};
+
+      // creates the integer object on the heap and initializes it with 5.
+      auto p2 = make_shared<int>(5);
+      // samrt pointer to custom type
+      auto pt = make_shared<Point>(7,200); // pass the arguments to the constructor
+      // Dynamic Array - REQUIRES c++20
+      auto pArr = make_shared<int[]>(5);
+      pArr[0] = 100;
+      return 0;
+  }
+  #+END_SRC
+
+
+#+LATEX: \captionof{listing}{Make Functions Unique Pointer}
+#+BEGIN_SRC C++ :flags "-std=c++20 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+  #include <cstdlib>
+  #include <memory>
+  #include <string>
+
+  using namespace std;
+
+  class Point {
+  public:
+      Point(int x, int y) {
+        cout << "Point(" << x << "," << y << ")" << endl;
+      }
+  };
+  int main() { // without using now to allocate resources for underlaying pointer
+      unique_ptr<int> p1{new int{5}};
+
+      // creates the integer object on the heap and initializes it with 5.
+      auto p2 = make_unique<int>(5);
+      // samrt pointer to custom type
+      auto pt = make_unique<Point>(7,200); // pass the arguments to the constructor
+      // Dynamic Array
+      auto pArr = make_unique<int[]>(5);
+      pArr[0] = 100;
+
+      return 0;
+  }
+  #+END_SRC
+
+ 
+  #+ATTR_LATEX: :options {Macker Shared}
+  #+BEGIN_infobox
+  make_shared saves muiltiple calls to *new* and *delete*. Uses only one
+  call to allocate memory for the resource itself as well as for the
+  control block.
+  #+END_infobox

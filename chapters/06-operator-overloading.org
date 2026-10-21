@@ -1,0 +1,1499 @@
+* Operator Overloading
+
+** Operator Overloading - Part I-III
+- Custom implementation for primitive operators
+- Allow usage of user-defined objects in mathematical expression
+- Overloaded as functions but provide a convenient notation
+- Implemented as member or global functions
+- Require usage of the operator keyword
+
+  /<ret> operator <#> (<arguments>)/
+
+- As global functions, require same no. of arguments as the operands
+- As member functions, one operand is passed as argument through this pointer
+  - binary operator will require only one explicit argument
+  - unary operator will not require any explicit argument
+
+   /Integer operator+(const Integer &, const Integer &);/
+   /Integer Integer::operator+(const Integer &);/
+
+
+#+LATEX: \captionof{listing}{Integer Class Declaration}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/inc/integer.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+class Integer {
+    int *m_pInt;
+public:
+    Integer();                                  // Default constructor
+    Integer(int value);                         // Parameterized constructor
+    Integer(const Integer &obj);                // Copy constructor
+    Integer(Integer &&obj);                     // Move constructor
+    int GetValue()const;
+    void SetValue(int value);
+    ~Integer();
+    Integer & operator ++();                    // pre-increment operator
+    Integer operator ++(int);                   // post-increment operator
+    bool operator ==(const Integer &a)const;    // comparison
+    Integer & operator =(const Integer &a);     // Copy assignment
+    Integer & operator =(Integer &&a);          // Move assignment
+    Integer operator +(const Integer & a)const; // + operator
+
+    void operator ()();                         // Function Call Operator
+    explicit operator int();                    // Type Conversion Operator
+
+    // operator >> is decalred as friend of Integer Class
+    friend std::istream & operator >> (std::istream &input, Integer &a);
+};
+Integer operator +(int x, const Integer &y);
+std::ostream & operator <<(std::ostream & out, const Integer &a);
+std::istream & operator >> (std::istream &input, Integer &a);
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Constructors}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "integer.h"
+#include <iostream>
+
+using namespace std;
+
+Integer::Integer() {                           // standard constructor
+    cout << "Integer()" << endl;
+    m_pInt = new int(0);
+}
+
+Integer::Integer(int value) {                  // paramterizied constructor
+    cout << "Integer(int)" << endl;
+    m_pInt = new int(value);
+}
+
+Integer::Integer(const Integer & obj) {        // copy constructor
+    cout << "Integer(const Integer&)" << endl;
+    m_pInt = new int(*obj.m_pInt);
+}
+
+Integer::Integer(Integer && obj) {             // move constructor  
+    cout << "Integer(int&&)" << endl;
+    m_pInt = obj.m_pInt;
+    obj.m_pInt = nullptr;
+}
+
+Integer::~Integer() {                        // destructor
+    cout << "~Integer()" << endl;
+    delete m_pInt;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Setter and Getter}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+  int Integer::GetValue() const {
+    return *m_pInt;
+  }
+
+  void Integer::SetValue(int value) {
+    *m_pInt = value;
+  }
+  #+END_SRC
+
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Operator Overlaoding member functiosn}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+Integer & Integer::operator++() { // ++a means a.operator++()
+    cout << "operator++()" << endl;
+    ++(*m_pInt);
+    return *this;  // the value a the address of this
+}
+
+Integer Integer::operator++(int) { // a++ means a.operator++(int)
+    cout << "operator++(int)" << endl;
+    Integer temp(*this);
+    ++(*m_pInt);
+    return temp;
+}
+
+bool Integer::operator==(const Integer & a) const { // c==a means c.operator==(a)
+    cout << "operator==(const Integer &) const" << endl;
+    return *m_pInt == *a.m_pInt;
+}
+
+Integer & Integer::operator=(const Integer & a) { // c=a means c.operator=(a)
+    cout << "operator=(const Integer &) const" << endl;
+    if (this != &a) {            // check for self assignemnt
+    delete m_pInt;
+    m_pInt = new int(*a.m_pInt);
+    }
+    return *this;
+}
+
+Integer & Integer::operator=(Integer && a) { // c=&&a means c.operator=(&&a)
+    cout << "operator=(Integer &&) const" << endl;
+    if (this != &a) {
+    delete m_pInt;
+    m_pInt = a.m_pInt;
+    a.m_pInt = nullptr;
+    }
+    return *this;
+}
+
+Integer Integer::operator+(const Integer & a) const { // c+a means c.operator+(a)
+    cout << "operator+(const Integer &) const" << endl;
+    Integer temp;
+    *temp.m_pInt = *m_pInt + *a.m_pInt; // *this->m_pInt
+    return temp;
+}
+
+void Integer::operator()() {
+    // cout << "operator()()" << endl;
+    cout << *m_pInt << endl; 
+}
+#+END_SRC
+  
+#+LATEX: \captionof{listing}{Integer Class Definition: Global Operator overloading}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+Integer operator +(int x, const Integer &y) {
+    // cout << "operator+(int, const Integer)" << endl;
+    Integer temp;
+    temp.SetValue(x + y.GetValue());
+    return temp;
+}
+ostream & operator <<(ostream & out, const Integer &a) {
+    // cout << "operator <<(ostream &, const Integer &)" << endl;
+    out << a.GetValue();
+    return out;
+}
+istream & operator >> (istream &input, Integer &a) {
+    // cout << "operator >>(istream &, Integer &)" << endl;
+    int x;
+    input >> x;
+    // a.SetValue(x);  // SetValue() allows copy by value, no friend required
+    *a.m_pInt = x;     // access to private member of Integer Class.    
+    return input;
+}
+#+END_SRC
+
+*** Integer-01: Add operator+()
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-01/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+  #include <sstream>
+
+    void Process(Integer val) {
+
+        (void)val;
+    }
+
+    int main() {
+        using namespace std;
+        istringstream cin_sim("63");
+
+ // 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+        cout << sum.GetValue() << endl;
+
+ // 2) Overloading operator++     Pre-Increment
+        ++sum;
+        cout << sum.GetValue() << endl;
+
+ // 3) Overloading operator++     Post-Increment
+        sum++;
+        cout << sum.GetValue() << endl;
+ // 4) Overloading operator==       Comparison
+        cout << (a == b) << endl;
+
+ // 5) Overloading operator=          Assignment
+        Integer c;
+        c = a;
+        cout << c.GetValue() << endl;
+ // 6) Overloading operator+ with int
+        Integer sum1 = a + 5;  // a.operator+(5)
+        Integer sum2 = 5 + a;  // 1. operand is of primitive type -> overlaod as global function
+        cout << sum1.GetValue() << ", " << sum2.GetValue()<< endl;
+ // 7) Overloading operator<< 
+        cout << sum1 << ", " << sum2 << endl; // operator <<(std::cout, sum1).operator(std::endl)
+ // 8) Overloading operator>> 
+        cin >> c;
+        cout << c << endl;;
+ // 9) Overloading operator() Functin Call Operator 
+        b();
+        return 0;
+    }
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Makefile Integer}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-01/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-01/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+3
+4
+Integer(const Integer&)
+Integer(int&&)
+~Integer()
+~Integer()
+5
+0
+Integer()
+1
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+~Integer()
+Integer()
+Integer(int&&)
+~Integer()
+6, 6
+6, 6
+32765
+2
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+*** Integer-02: Pre Increment operator++()
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-02/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+int main() {
+        using namespace std;
+
+ // 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+        cout << sum.GetValue() << endl;
+
+ // 2) Overloading operator++     Pre-Increment
+        ++sum;
+        cout << sum.GetValue() << endl;
+
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-02/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-02/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+3
+4
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+*** Integer-03: Post Increment operator ++(int)
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-03/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+int main() {
+        using namespace std;
+
+ // 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+        cout << sum.GetValue() << endl;
+
+ // 3) Overloading operator++     Post-Increment
+        sum++;
+        cout << sum.GetValue() << endl;
+
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-03/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-03/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+3
+Integer(const Integer&)
+Integer(int&&)
+~Integer()
+~Integer()
+4
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+
+*** Integer-04: Comparison operator==()
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-04/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+int main() {
+        using namespace std;
+
+ // 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+    
+ // 4) Overloading operator==       Comparison
+        cout << (a == b) << endl;
+
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-04/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-04/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+0
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+*** Integer-05: Assignment operator=()
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-05/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+int main() {
+        using namespace std;
+
+// 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+    
+ // 5) Overloading operator=          Assignment
+        Integer c;
+        c = a;
+        cout << c.GetValue() << endl;
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-05/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-05/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+Integer()
+1
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+
+*** Integer-06: Global Add  operator+(int x, const Integer &y)
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-06/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+int main() {
+        using namespace std;
+
+// 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+
+ // 6) Overloading operator+ with int
+        Integer sum1 = a + 5;  // a.operator+(5)
+        Integer sum2 = 5 + a;  // 1. operand is of primitive type -> overlaod as global function
+        cout << sum1.GetValue() << ", " << sum2.GetValue()<< endl;
+
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-06/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-06/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+~Integer()
+Integer()
+Integer(int&&)
+~Integer()
+6, 6
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+
+*** Integer-07: Global Output Operator  <<
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-07/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+int main() {
+        using namespace std;
+
+// 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+
+ // 6) Overloading operator+ with int
+        Integer sum1 = a + 5;  // a.operator+(5)
+        Integer sum2 = 5 + a;  // 1. operand is of primitive type -> overlaod as global function
+    
+ // 7) Overloading operator<< 
+        cout << sum1 << ", " << sum2 << endl; // operator <<(std::cout, sum1).operator(std::endl)
+        b();
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-07/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-07/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+~Integer()
+Integer()
+Integer(int&&)
+~Integer()
+6, 6
+2
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+*** Integer-08: Gloabl Input Operator >>
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-08/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+  #include <sstream>
+
+int main() {
+        using namespace std;
+        istringstream cin_sim("63");
+
+// 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+    
+ // 5) Overloading operator=          Assignment
+        Integer c;
+        c = a;
+        cout << c.GetValue() << endl;
+    
+ // 8) Overloading operator>> 
+        cin >> c;
+        cout << c << endl;;
+
+    return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-08/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-08/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+Integer()
+1
+32767
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+*** Integer-09: Function Call operator()()
+#+LATEX: \captionof{listing}{Main CPP - Integer Client }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-09/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+int main() {
+        using namespace std;
+
+// 1) Overloading operator+     
+        Integer a(1), b(2);
+        Integer sum = a + b;
+
+    
+ // 9) Overloading operator() Functin Call Operator 
+        b();
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-09/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-09/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer()
+Integer(int&&)
+~Integer()
+2
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+
+
+
+** Operator Overloading - Part IV (Friend Keyword)
+
+#+ATTR_LATEX: :options {Friends}
+#+BEGIN_infobox
+Friends of a Class are defined in the declaration of a class
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Friend Class Demonstration }
+#+BEGIN_SRC C++ :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  class A_Class {
+      int a_private_int {5};
+      void a_private_function() {;}
+      
+  public:
+      void a_public_function() {;}
+  };
+
+  class B_Class {
+      int b_private_int {5};
+      void b_private_function() {;}
+      
+  public:
+      void b_public_function() {;}
+      friend class A_Class;           // give B_Class access to all private's of A_Class
+  };
+
+#+END_SRC
+
+
+#+LATEX: \captionof{listing}{Friend Class Usage in Integer Class}
+#+BEGIN_SRC C++ :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+// ------------------------------------------------------------------------
+// Integer Class Declaration
+// ------------------------------------------------------------------------
+class Integer {
+    int *m_pInt;
+public:
+    Integer();                                  // Default constructor
+    Integer(int value);                         // Parameterized constructor
+    Integer(const Integer &obj);                // Copy constructor
+    Integer(Integer &&obj);                     // Move constructor
+    int GetValue()const;
+    void SetValue(int value);
+    ~Integer();
+    Integer & operator ++();                    // pre-increment operator
+    Integer operator ++(int);                   // post-increment operator
+    bool operator ==(const Integer &a)const;    // comparison
+    Integer & operator =(const Integer &a);     // Copy assignment
+    Integer & operator =(Integer &&a);          // Move assignment
+    Integer operator +(const Integer & a)const; // + operator
+
+    void operator ()();                         // Function Call Operator
+
+    // operator >> is friend of Class Integer
+    friend std::istream & operator >> (std::istream &input, Integer &a);
+}
+
+// ------------------------------------------------------------------------
+// Global Function Declarations
+// ------------------------------------------------------------------------
+Integer operator +(int x, const Integer &y);
+std::ostream & operator <<(std::ostream & out, const Integer &a);
+std::istream & operator >> (std::istream &input, Integer &a);
+
+// -------------------------------------------------------------------------
+// Global Function Definition (operator>>() overloading)
+// ------------------------------------------------------------------------
+std::istream & operator >> (std::istream &input, Integer &a) {
+    int x;
+    input >> x;
+    // a.SetValue(x);  // SetValue() allows copy by value, no friend required
+    ,*a.m_pInt = x;     // access to private member of Integer Class.   
+    return input;
+}
+// ------------------------------------------------------------------------
+#+END_SRC
+
+
+** Operator Overloading Part V (Smart Pointer Basics)
+
+#+ATTR_LATEX: :options {RAII}
+#+BEGIN_infobox
+Resource Aquisition Is Initialization: The lifetime of a resource is
+bound to a local object.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Main CPP - Smart Pointer for Integer Class }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-10/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+
+// Smart Pointer for Integer Class
+class IntPtr {
+    Integer *m_p;
+public:
+    IntPtr(Integer *p) :m_p(p) {
+    
+    }
+    ~IntPtr() {
+    delete m_p;
+    }
+    Integer *operator ->() {
+    return m_p;
+    }
+    Integer & operator *() {
+    return *m_p;
+    }
+};
+
+// Raw Pointer
+// void CreateInteger() {
+//     Integer *p = new Integer;
+//     p->SetValue(3);
+//     std::cout << p->GetValue() << std::endl;
+//     delete p;  // risk of memory leak if not delete is not called!!
+// }
+
+// Smart Pointer for Integer Class
+void CreateInteger() {
+    IntPtr p = new Integer;
+    p->SetValue(3);
+    std::cout << p->GetValue() << std::endl;
+}
+
+int main() {
+        using namespace std;
+
+    CreateInteger();
+    
+// 10) Smart Pointer
+
+        return 0;
+    }
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-10/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run App}
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-10/ :exports both :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+
+
+#+ATTR_LATEX: :options {Smart Pointer}
+#+BEGIN_infobox
+A smart pointer behaves like a pointer but it automatically frees the memory.
+#+END_infobox
+
+
+** Operator Overloading - Part VI (Smart Pointer in C++11) 
+
+#+LATEX: \captionof{listing}{Main CPP - Smart Pointer for Integer Class }
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-11/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <integer.h>
+  #include <iostream>
+  #include <memory>   // for smart pointer
+
+using namespace std;
+
+void Process(unique_ptr<Integer> ptr) {
+    (void)ptr;
+}
+
+void Process(shared_ptr<Integer> ptr) {  // copy by value
+                                         // increments shared-ptr reference counter
+    (void)ptr;
+}
+
+
+// Smart Pointer C++11
+void CreateInteger() {
+    unique_ptr<Integer> p1(new Integer);
+    p1->SetValue(3);
+    cout << p1->GetValue() << endl;
+    cout << "move: ";
+    Process(move(p1));                  // move is allowed
+                                        // pointer is deleted when Process terminates
+
+    // auto px(p);                      // error use of deleted function
+                                        // unique_ptr(const unique_ptr&) = delete;
+
+    // cout << p1->GetValue() << endl;  // after move p1 is not valid anymore
+
+    shared_ptr<Integer> p2(new Integer);
+    Process(p2);                        // Copy by Value
+    p2->SetValue(5);
+    cout << p2->GetValue() << endl;     // P2 is deleted when shared-ptr reference counter is 0
+}                                       // this is the case when CreateInteger exits.
+
+int main() {
+    CreateInteger();
+    
+    return 0;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Makefile Integer}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-11/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run App}
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-11/ :exports both :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+: ./app
+: Integer()
+: 3
+: move: ~Integer()
+: Integer()
+: 5
+: ~Integer()
+
+
+#+ATTR_LATEX: :options {Unique Pointer}
+#+BEGIN_infobox
+Is used when you do not want to share the underlying resource. (
+#+END_infobox
+
+
+** Operator Overloading - Part VII (Rules)
+- Associativity, precedence & arity (operand count) does not change
+- Operator functions should be *non-static*
+  - except for new & delete
+- One argument shold be *user defined* type
+- *Global* overload if first operand is primitive type
+- Not all operators can be overloaded
+  - . ?: .* sizeof
+- Cannot define new operators
+- Overload for conventional behaviour only
+  
+
+** Type Conversions - Part I (Basics)
+- Conversions between types
+- Performed through casts
+- Ordered by compiler *(implicit)* or user *(explicit)*
+- Conversion between
+  - basic & basic
+  - basic & user defined
+  - user defined & basic
+  - user defined & user defined
+
+#+LATEX: \captionof{listing}{Type conversion examples}
+#+BEGIN_SRC C++ :exports both :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+    int a = 5, b = 2;
+    float f1 = a/b;                     // result is 2 because
+                                        // division of 2 integer gives also an integer
+    cout << "f1= " << f1 << endl;
+    
+    float f2 = (float) a/b;             // c-style cast - no check for validness of cast
+    cout << "f2= " << f2 << endl;
+
+    float f3 = static_cast<float>(a)/b; // static cast
+    cout << "f3= " << f3 << endl;
+
+    char *p1 = (char *) &a;                   // syntaxs ok
+    // char *p2 = static_cast<char *>(&a);    // syntaxs not ok - not compilable
+    char *p3 = reinterpret_cast<char *>(&a);  // syntaxs ok 
+    (void)p1;                                 // avoids warning
+    (void)p3;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: f1= 2
+: f2= 2.5
+: f3= 2.5
+
+#+ATTR_LATEX: :options {C-Sytle Cast}
+#+BEGIN_infobox
+float f2 = (float) a/b;
+
+- no check for validness of cast
+- discards the qualifiers, e.g. const, ...
+#+END_infobox
+
+
+** Type Conversions - Part II (Primitive to User Type)
+
+#+ATTR_LATEX: :options {Primitie Type}
+#+BEGIN_infobox
+This concersion is performed by means of Parameterized Constructor.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Main CPP - Type Conversion Primitive to User Defined Type}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-12/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+
+using namespace std;
+
+void Print(Integer a) {(void)a,}
+
+int main() {
+
+    Integer a1{5};   // explicit type cast with constructor
+
+    // Initialization
+    Integer a2 = 5;  // implicit type conversion
+
+    Print(5);        // implicit type conversion
+
+    // Assignment
+    a1 = 7;          // implicti type conversion
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-12/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run App}
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-12/ :exports both :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+: ./app
+: Integer(int)
+: Integer(int)
+: Integer(int)
+: ~Integer()
+: ~Integer()
+: ~Integer()
+
+
+#+ATTR_LATEX: :options {Keyword: Explicite}
+#+BEGIN_infobox
+In some cases that may be undesirable, we do not want the compiler to
+automatically use our constructor for implicit conversion.
+
+Therefore we can mark the constructor with the explicit keyword in the class declaration.
+#+END_infobox
+
+So in most cased the single argument constructors of your class should
+be marked with *explicit* keyword.
+
+
+** Type Conversion - Part III (User to Primitive Type)
+
+#+LATEX: \captionof{listing}{Main CPP - Type Conversion Primitive to User Defined Type}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-13/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+
+using namespace std;
+
+void Print(Integer a) {(void)a; }
+
+Integer::operator int() {
+    return *m_pInt;
+}
+
+int main() {
+
+    Integer a1{5};   // explicit type cast with constructor
+
+    int x = static_cast<int>(a1);    // use conversion operator
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-13/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-13/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(int)
+Integer(int)
+~Integer()
+Integer(int)
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+#+ATTR_LATEX: :options {Type Conversion Operator}
+#+BEGIN_infobox
+/operator <type>()/
+
+No Arguments
+No Return Type
+#+END_infobox
+
+
+** Type Conversion - Part IV (User defined Type to User defined Type) 
+
+#+LATEX: \captionof{listing}{Main CPP - User defined Type to User defined Type}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-14/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+
+using namespace std;
+
+class Product {
+    Integer m_Id;
+
+public:
+    Product(const Integer &id) : m_Id{id} {
+    cout << "Product(const Integer &)" << endl;
+    }
+    ~Product() {
+    cout << "~Product" << endl;
+    }
+    const Integer& GetInteger() const {
+    return m_Id;
+    }
+    operator Integer() {   // syntactic sugar
+    return m_Id;
+    }
+};
+
+
+void Print(Integer a) {(void)a; }
+
+Integer::operator int() {
+    return *m_pInt;
+}
+
+int main() {
+
+    Product p {5};
+    Integer id_1 = p.GetInteger();
+    Integer id_2 = p;                 // id_2 = p.operator Integer();
+
+    Integer id_3 {5};
+
+    if(id_1 == p) {
+    cout << "Id_1 matches with the product\n" << endl;
+    }
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-14/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-14/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Integer(int)
+Integer(const Integer&)
+Product(const Integer &)
+~Integer()
+Integer(const Integer&)
+Integer(const Integer&)
+Integer(int)
+Integer(const Integer&)
+~Integer()
+Id_1 matches with the product
+
+~Integer()
+~Integer()
+~Integer()
+~Product
+~Integer()
+#+end_example
+
+
+** Initialization vs. Assignment & Member Initialization
+
+
+#+LATEX: \captionof{listing}{Main CPP - Assignment}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-15/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+
+using namespace std;
+
+class Product {
+    Integer m_Id;
+
+public:
+    Product(const Integer &id)  {
+    cout << "Product(const Integer &)" << endl;
+    m_Id = id;                          // use of assignment
+    }
+    ~Product() {
+    cout << "~Product()" << endl;
+    }
+};
+
+int main() {
+
+// 01 - Assignment Integer Classe
+    // Integer a1;   
+    // a1 = 3;   // a1 = Integer(8);
+    // cout << a1 << endl;
+
+// 02 - Assignment Product Class
+    Product p {5};
+
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-15/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-15/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+: ./app
+: Integer(int)
+: Integer()
+: Product(const Integer &)
+: operator=(const Integer &) const
+: ~Integer()
+: ~Product()
+: ~Integer()
+
+
+
+#+LATEX: \captionof{listing}{Main CPP - Member Initializer List}
+#+BEGIN_SRC C++ :tangle ../projects/section-06/Integer/Integer-16/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+
+using namespace std;
+
+class Product {
+    Integer m_Id;
+
+public:
+    Product(const Integer &id) :m_Id (id) {         // use of member initializizer list
+    cout << "Product(const Integer &)" << endl;
+    }
+    ~Product() {
+    cout << "~Product()" << endl;
+    }
+};
+
+
+int main() {
+
+// 01 - Initialization Integer Classw
+    // Integer a1 {3};   
+    // cout << a1 << endl;
+
+// 02 - Initialization Product Class
+    Product p {5};
+
+
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-06/Integer/Integer-16/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-06/Integer/Integer-16/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+: ./app
+: Integer(int)
+: Integer(const Integer&)
+: Product(const Integer &)
+: ~Integer()
+: ~Product()
+: ~Integer()
+
+
+#+ATTR_LATEX: :options {Prioritize}
+#+BEGIN_infobox
+Assignement need more function calls as assignemnt - therefore initialization shall be preferd over assignment.
+#+END_infobox

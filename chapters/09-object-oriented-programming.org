@@ -1,0 +1,1850 @@
+* Object Oriented Programming
+
+** COMMENT Account Hierachie Source Code
+
+*** Class Declaration
+
+#+LATEX: \captionof{listing}{Class Account}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/inc/Account.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#pragma once
+#include <string>
+class Account {
+private:
+    std::string m_Name;
+    int m_AccNo;
+    static int s_ANGenerator;
+protected:
+    float m_Balance;
+public:
+    Account(const std::string &name, float balance);
+    virtual ~Account();
+    const std::string GetName()const;
+    float GetBalance()const;
+    int GetAccountNo()const;
+
+    virtual void AccumulateInterest();
+    virtual void Withdraw(float amount);
+    void Deposit(float amount);
+    virtual float GetInterestRate()const;
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Class Savings}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/inc/Savings.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#pragma once
+#include "Account.h"
+class Savings : public Account {
+private:
+    float m_Rate;
+public:
+    Savings(const std::string &name, float balance, float rate);
+    ~Savings();
+    float GetInterestRate()const override;
+    void AccumulateInterest() override;
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Class Checking}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/inc/Checking.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#pragma once
+#include "Account.h"
+class Checking : public Account {
+private:
+    float m_MinimumBalance {50};
+public:
+    // Constructor Inheritance - inherits all constructor of the base
+    using Account::Account;
+    // Constructor with 2 Parameters is obsolete due to the constructor inheritance
+    // Checking(const std::string &name, float balance);
+    Checking(const std::string &name, float balance, float minbalance);
+    ~Checking();
+    void Withdraw(float amount) override;
+    float GetMinimumBalance()const;
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Transaction}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/inc/Transaction.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#pragma once
+#include "Account.h"
+void Transact(Account *pAccount);
+#+END_SRC
+
+
+
+*** Class Definition
+
+#+LATEX: \captionof{listing}{Class Account}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/src/Account.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+#include <iostream> 
+int Account::s_ANGenerator = 1000;
+
+Account::Account(const std::string &name, float balance):
+    m_Name(name), m_Balance(balance){
+    m_AccNo = ++s_ANGenerator;
+    //std::cout << "Account(const std::string &, float)" << std::endl; 
+}
+Account::~Account() {
+    //std::cout << "~Account()" << std::endl;
+}
+const std::string Account::GetName() const {
+    return m_Name;
+}
+float Account::GetBalance() const {
+    return m_Balance;
+}
+int Account::GetAccountNo() const {
+    return m_AccNo;
+}
+void Account::AccumulateInterest() {
+}
+void Account::Withdraw(float amount) {
+    /*
+      Balance should be greater than 0 & the amount
+      to withdraw should be less than balance
+    ,*/
+    if (amount < m_Balance && m_Balance > 0)
+        m_Balance -= amount;
+    else {
+        //Throw an exception instead of printing a message
+        //std::cout << "Insufficient balance" << std::endl;
+        throw std::runtime_error("Insufficient balance");
+    }
+}
+void Account::Deposit(float amount) {
+    m_Balance += amount;
+}
+float Account::GetInterestRate() const {
+    return 0.0f;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Class Savings}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/src/Savings.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Savings.h"
+#include <iostream>
+
+Savings::Savings(const std::string & name, float balance, float rate) : Account(name, balance), m_Rate(rate) {
+    //std::cout << "Savings(const std::string &, float)" << std::endl;
+}
+Savings::~Savings() {
+    //std::cout << "~Savings()" << std::endl;
+}
+float Savings::GetInterestRate() const {
+    return m_Rate;
+}
+void Savings::AccumulateInterest() {
+    m_Balance += (m_Balance * m_Rate);
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Class Checking}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/src/Checking.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Checking.h"
+#include <iostream>
+
+Checking::~Checking() {
+}
+// Constructor with 2 Parameters is obsolete due to the constructor inheritance
+// Checking::Checking(const std::string &name, float balance)
+//     : Account(name, balance) {
+// }
+
+Checking::Checking(const std::string &name, float balance, float minbalance) : m_MinimumBalance(minbalance), Account(name, balance){
+}
+void Checking::Withdraw(float amount) {
+    if ((m_Balance - amount) > m_MinimumBalance) {
+        Account::Withdraw(amount);         // call base class member function
+    }
+    else {
+        std::cout << "Invalid amount" << std::endl; 
+    }
+}
+float Checking::GetMinimumBalance() const {
+    return m_MinimumBalance;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Transaction}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/src/Transaction.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <typeinfo>
+#include "Account.h"
+#include "Checking.h"
+#include "Transaction.h"
+void Transact(Account * pAccount) {
+    std::cout << "Transaction started" << std::endl; 
+    std::cout << "Initial balance:" << pAccount->GetBalance() << std::endl;
+    pAccount->Deposit(100);
+    pAccount->AccumulateInterest();  // polymorphical call
+
+    // if (typeid(*pAccount) == typeid(Checking)) {
+    //  Checking *pChecking = static_cast<Checking*>(pAccount);
+    //  std::cout << "Minimum balance of Checking:" << pChecking->GetMinimumBalance() << std::endl;
+    // }
+
+    Checking *pChecking = dynamic_cast<Checking*>(pAccount);
+    if (pChecking != nullptr) {
+        std::cout << "Minimum balance of Checking: " << pChecking->GetMinimumBalance() << std::endl;
+    }
+
+    pAccount->Withdraw(170);  // polymorphical call
+    std::cout << "Interest rate: " << pAccount->GetInterestRate() << std::endl; // polymorphical call
+    std::cout << "Final balance: " << pAccount->GetBalance() << std::endl;
+}
+#+END_SRC
+
+
+*** Main CPP
+
+- hard to read
+- hard to remember when to call delete and assign nullptr.
+
+#+LATEX: \captionof{listing}{Main CPP - Banking Application}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-01/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Savings.h"
+#include "Checking.h"
+#include "Transaction.h"
+#include <typeinfo>
+int main()
+{
+    Checking ch("Bob", 100, 50);
+    Transact(&ch);
+
+    return 0;
+}
+#+END_SRC
+
+*** Make / Run
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-01/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc
+
+SRC=./src/main.cpp ./src/Account.cpp ./src/Transaction.cpp ./src/Checking.cpp ./src/Savings.cpp
+
+app: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-01/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/Account.cpp ../src/Transaction.cpp ../src/Checking.cpp ../src/Savings.cpp -o app
+: ./app
+: Transaction started
+: Initial balance:100
+: Minimum balance of Checking:50
+: Invalid amount
+: Interest rate:0
+: Final balance:200
+
+
+** Access Modifiers
+
+#+ATTR_LATEX:  :align p{5cm}l
+| <40>      | <40>                                           |
+| *modifier*  | *Meaning*                                        |
+|-----------+------------------------------------------------|
+| private   | Inaccessible outside the class                 |
+| public    | Accesible outside the class                    |
+| protected | Accessible only to class and its child classes |
+
+
+#+ATTR_LATEX:  :align p{5cm}p{5cm}l
+| <40>               | <40>                      |                             |
+| *Class Base*       | *Class Child : public Base* |                             |
+|--------------------+---------------------------+-----------------------------|
+| private: MemberA   | private: MemberA          | not accessible in the Child |
+| public: MemberB    | public: MemberB           | accessilbe                  |
+| protected: MemberC | protected: MemberC        | accessible                  |
+
+
+
+#+ATTR_LATEX:  :align p{5cm}p{5cm}l
+| <40>               | <40>                      |                             |
+| *Class Base*       | *Class Child : private Base* |                             |
+|--------------------+---------------------------+-----------------------------|
+| private: MemberA   | private: MemberA          | not accessible in the Child |
+| public: MemberB    | private: MemberB          | accessible                  |
+| protected: MemberC | private: MemberC          | accessible                  |
+
+
+#+ATTR_LATEX:  :align p{5cm}p{5cm}l
+| <40>               | <40>                      |                             |
+| *Class Base*       | *Class Child : protected Base* |                             |
+|--------------------+---------------------------+-----------------------------|
+| private: MemberA   | private: MemberA          | not accessible in the Child |
+| public: MemberB    | protected: MemberB        | accessible                  |
+| protected: MemberC | protected: MemberC        | accessible                  |
+
+If no modifier is used for inheritance than the default modifier is used:
+- /public/ if the child is structure
+- /private/ if the child is a class
+independant wheather the base is a struct or a class.
+
+*Object Construction*
+- Constructors execute from base to child
+- Destructors execute from child to base
+- Base data members will be part of child object
+
+
+
+** Project - I Introduction to Banking Application
+- Manage accounts
+- Customers can perform common operations
+- Bank can perfomr administrative tasks
+- Represent account through Account class
+- Common implementation for all account types
+
+#+LATEX: \captionof{listing}{Account Class}
+#+BEGIN_SRC plantuml :file ../projects/section-09/uml/account.png :exports results
+class Account {
+   - String name
+   - String accno
+   - ...
+   + void Withdraw(int)
+   + Deposit()
+   + GetBalance()
+   + AccumulateInterest()
+   + GetInterestRate()
+   + ...
+}
+#+END_SRC
+#+ATTR_LATEX: :width 5cm
+#+RESULTS:
+[[file:../projects/section-09/uml/account.png]]
+
+
+#+LATEX: \captionof{listing}{Banking Application}
+#+BEGIN_SRC plantuml :file ../projects/section-09/uml/banking.png :exports results
+Account <|-- Savings
+Account <|-- Checking
+#+END_SRC
+#+ATTR_LATEX: :width 5cm
+#+RESULTS:
+[[file:../projects/section-09/uml/banking.png]]
+
+
+** Project - II (Account Class)
+*** Class Declaration
+
+#+LATEX: \captionof{listing}{Class Account}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02a/inc/Account.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string>
+
+class Account {
+private:
+    std::string m_Name;
+    float m_Balance;    
+    int m_AccNo;
+    static int s_ANGenerator; // account number generator
+public:
+    Account(const std::string &name, float balance);
+    ~Account();
+    const std::string GetName()const;
+    float GetBalance() const;
+    int GetAccountNo() const;
+
+    void AccumulateInterest();
+    void Withdraw(float amount);
+    void Deposit(float amount);
+    float GetInterestRate() const;
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Class Checking}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02a/inc/Checking.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+class Checking : public Account {
+private:
+    float m_MinimumBalance {50};
+public:
+    // Constructor Inheritance - inherits all constructor of the base
+    using Account::Account;
+    // Constructor with 2 Parameters is obsolete due to the constructor inheritance
+    // Checking(const std::string &name, float balance);
+    Checking(const std::string &name, float balance, float minbalance);
+    ~Checking();
+    void Withdraw(float amount) override;
+    float GetMinimumBalance()const;
+};
+#+END_SRC
+
+
+#+LATEX: \captionof{listing}{Transaction}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02a/inc/Transaction.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#pragma once
+#include "Account.h"
+void Transact(Account *pAccount);
+#+END_SRC
+
+
+
+*** Class Definition
+
+#+LATEX: \captionof{listing}{Class Account}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02a/src/Account.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+#include <iostream> 
+
+ int Account::s_ANGenerator = 1000;
+
+Account::Account(const std::string &name, float balance) :
+    m_Name(name), m_Balance(balance){
+    m_AccNo = ++s_ANGenerator;
+    //std::cout << "Account(const std::string &, float)" << std::endl; 
+}
+Account::~Account() {
+    //std::cout << "~Account()" << std::endl;
+}
+const std::string Account::GetName() const {
+    return m_Name;
+}
+float Account::GetBalance() const {
+    return m_Balance;
+}
+int Account::GetAccountNo() const {
+    return m_AccNo;
+}
+void Account::AccumulateInterest() {
+}
+void Account::Withdraw(float amount) {
+    /*
+      Balance should be greater than 0 & the amount
+      to withdraw should be less than balance
+    ,*/
+    if (amount < m_Balance && m_Balance > 0) {
+        m_Balance -= amount;
+    }
+    else {
+        std::cout << "Insufficient balance" << std::endl;        
+    }
+}
+void Account::Deposit(float amount) {
+    m_Balance += amount;
+}
+float Account::GetInterestRate() const {
+    return 0.0f;
+}
+#+END_SRC
+
+*** Main
+#+LATEX: \captionof{listing}{Main CPP - Banking Application}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02a/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Account.h"
+
+using namespace std;
+int main()
+{
+    Account acc("Bob", 1000);
+    cout << "Initial balance: " << acc.GetBalance() << endl;
+    acc.Deposit(200);
+    acc.Withdraw(380);
+    cout << "Balance: " << acc.GetBalance() << endl;
+        
+    return 0;
+}
+#+END_SRC
+
+*** Make / Run
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-02a/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc
+
+SRC=./src/main.cpp ./src/Account.cpp
+
+app: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-02a/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: ./app
+: Initial balance: 1000
+: Balance: 820
+
+
+
+
+** Project - II (Savings Class - Inheritance)
+
+The account class itself is not of much use to us unless we inherit
+this class into specific Account classes. Let's go ahead and add an Accout class called Savings.
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-02b/inc/Account.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string>
+
+class Account {
+private:
+    std::string m_Name;
+    int m_AccNo;
+    static int s_ANGenerator; // account number generator
+
+protected:
+        float m_Balance;    // protected members can be access by child class
+public:
+    Account(const std::string &name, float balance);
+    ~Account();
+    const std::string GetName()const;
+    float GetBalance() const;
+    int GetAccountNo() const;
+
+    void AccumulateInterest();
+    void Withdraw(float amount);
+    void Deposit(float amount);
+    float GetInterestRate() const;
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Savings.h}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02b/inc/Savings.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+class Savings : public Account {
+private:
+    float m_Rate; // interest rate accumlate the interest into the Savings account
+public:
+    Savings(const std::string &name, float balance, float rate);
+    ~Savings();
+    float GetInterestRate() const ;
+    void AccumulateInterest() ;
+};
+#+END_SRC
+
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-02b/src/Account.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+#include <iostream> 
+
+int Account::s_ANGenerator = 1000;
+
+Account::Account(const std::string &name, float balance) :
+    m_Name(name), m_Balance(balance){
+    m_AccNo = ++s_ANGenerator;
+}
+Account::~Account() {
+    //std::cout << "~Account()" << std::endl;
+}
+const std::string Account::GetName() const {
+    return m_Name;
+}
+float Account::GetBalance() const {
+    return m_Balance;
+}
+int Account::GetAccountNo() const {
+    return m_AccNo;
+}
+void Account::AccumulateInterest() {
+}
+void Account::Withdraw(float amount) {
+    /*
+      Balance should be greater than 0 & the amount
+      to withdraw should be less than balance
+    ,*/
+    if (amount < m_Balance && m_Balance > 0) {
+        m_Balance -= amount;
+    }
+    else {
+        std::cout << "Insufficient balance" << std::endl;        
+    }
+}
+void Account::Deposit(float amount) {
+    m_Balance += amount;
+}
+float Account::GetInterestRate() const {
+    return 0.0f;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Savings.cpp}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02b/src/Savings.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Savings.h"
+#include <iostream>
+
+Savings::Savings(const std::string & name, float balance, float rate)
+    : Account(name, balance), m_Rate(rate) {
+// initializer list calling Constructor of Base Class
+}
+Savings::~Savings() {
+    //std::cout << "~Savings()" << std::endl;
+}
+float Savings::GetInterestRate() const {
+    return m_Rate;
+}
+void Savings::AccumulateInterest() {
+    m_Balance += (m_Balance * m_Rate);
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - Banking Application}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-02b/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Savings.h"
+
+using namespace std;
+int main()
+{
+    Savings acc("Bob", 1000, 0.5f);
+    cout << "Initial balance: " << acc.GetBalance() << endl;
+    acc.Deposit(200);
+    acc.AccumulateInterest();
+    acc.Withdraw(380);
+    cout << "Balance: " << acc.GetBalance() << endl;
+        
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :exports none  :tangle ../projects/section-09/OOP-02b/Makefile :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc
+
+SRC=./src/main.cpp ./src/Account.cpp ./src/Savings.cpp
+
+app: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :exports results :dir ../projects/section-09/OOP-02b/ :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: ./app
+: Initial balance: 1000
+: Balance: 1420
+
+
+
+
+** Project - III (Checking Class - Constructor Inheritance)
+
+Checking class asures no withdraw when balance is below a
+minimum. Default is 50.
+
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-03/inc/Account.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string>
+
+class Account {
+private:
+    std::string m_Name;
+    int m_AccNo;
+    static int s_ANGenerator; // account number generator
+
+protected:
+        float m_Balance;    // protected members can be access by child class
+public:
+    Account(const std::string &name, float balance);
+    ~Account();
+    const std::string GetName()const;
+    float GetBalance() const;
+    int GetAccountNo() const;
+
+    void AccumulateInterest();
+    void Withdraw(float amount);
+    void Deposit(float amount);
+    float GetInterestRate() const;
+};
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-03/inc/Savings.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+class Savings : public Account {
+private:
+    float m_Rate; // interest rate accumlate the interest into the Savings account
+public:
+    Savings(const std::string &name, float balance, float rate);
+    ~Savings();
+    float GetInterestRate() const ;
+    void AccumulateInterest() ;
+};
+#+END_SRC
+
+In Checking class we are going to use *Constructor Inheritance*, thus
+all constructors are inherited from base class.
+
+#+LATEX: \captionof{listing}{Checking.h}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-03/inc/Checking.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+
+class Checking : public Account {
+
+private:
+    float m_MinimumBalance {50};
+public:
+    // Constructor Inheritance
+    using Account::Account;
+
+    Checking(const std::string &name, float balance, float minbalance);
+    ~Checking();
+    void Withdraw(float amount);
+    float GetMinimumBalance()const;
+};
+#+END_SRC
+
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-03/src/Account.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+#include <iostream> 
+int Account::s_ANGenerator = 1000;
+
+Account::Account(const std::string &name, float balance):
+    m_Name(name), m_Balance(balance){
+    m_AccNo = ++s_ANGenerator;
+    //std::cout << "Account(const std::string &, float)" << std::endl; 
+}
+Account::~Account() {
+    //std::cout << "~Account()" << std::endl;
+}
+const std::string Account::GetName() const {
+    return m_Name;
+}
+float Account::GetBalance() const {
+    return m_Balance;
+}
+int Account::GetAccountNo() const {
+    return m_AccNo;
+}
+void Account::AccumulateInterest() {
+}
+void Account::Withdraw(float amount) {
+    /*
+      Balance should be greater than 0 & the amount
+      to withdraw should be less than balance
+    ,*/
+    if (amount < m_Balance && m_Balance > 0)
+        m_Balance -= amount;
+    else {
+        //Throw an exception instead of printing a message
+        //std::cout << "Insufficient balance" << std::endl;
+        throw std::runtime_error("Insufficient balance");
+    }
+}
+void Account::Deposit(float amount) {
+    m_Balance += amount;
+}
+float Account::GetInterestRate() const {
+    return 0.0f;
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-03/src/Savings.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Savings.h"
+#include <iostream>
+
+Savings::Savings(const std::string & name, float balance, float rate) : Account(name, balance), m_Rate(rate) {
+    //std::cout << "Savings(const std::string &, float)" << std::endl;
+}
+Savings::~Savings() {
+    //std::cout << "~Savings()" << std::endl;
+}
+float Savings::GetInterestRate() const {
+    return m_Rate;
+}
+void Savings::AccumulateInterest() {
+    m_Balance += (m_Balance * m_Rate);
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Checking.cpp}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-03/src/Checking.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Checking.h"
+#include <iostream>
+
+Checking::~Checking() {
+}
+
+Checking::Checking(const std::string &name, float balance, float minbalance)
+    : Account(name, balance), m_MinimumBalance(minbalance) {
+}
+void Checking::Withdraw(float amount) {
+    if ((m_Balance - amount) > m_MinimumBalance) {
+        Account::Withdraw(amount);         // call base class member function
+    }
+    else {
+        std::cout << "Invalid amount" << std::endl; 
+    }
+}
+float Checking::GetMinimumBalance() const {
+    return m_MinimumBalance;
+}
+#+END_SRC
+
+
+#+LATEX: \captionof{listing}{Main CPP - Banking Application}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-03/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Checking.h"
+
+using namespace std;
+int main()
+{
+    Checking acc("Bob", 1000);  // invokes the inherited base class constructor
+    cout << "Initial balance: " << acc.GetBalance() << endl;
+    acc.Withdraw(980);
+    cout << "Balance: " << acc.GetBalance() << endl;
+        
+    return 0;
+}
+#+END_SRC
+
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-03/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc
+
+SRC= ./src/main.cpp ./src/Account.cpp ./src/Savings.cpp ./src/Checking.cpp
+
+app: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-03/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: ./app
+: Initial balance: 1000
+: Invalid amount
+: Balance: 1000
+
+
+#+ATTR_LATEX: :options {Constructor Inheritance}
+#+BEGIN_infobox
+All the constructors of the base can be inherited with the using
+directive e.g. /using Account::Account;/ in the class delcalration of
+the child class. The according constructor is therefore invoked
+automatically.
+#+END_infobox
+
+
+
+** Project - IV (Transaction Class )
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04a/inc/Account.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string>
+
+class Account {
+private:
+    std::string m_Name;
+    int m_AccNo;
+    static int s_ANGenerator; // account number generator
+
+protected:
+        float m_Balance;    // protected members can be access by child class
+public:
+    Account(const std::string &name, float balance);
+    ~Account();
+    const std::string GetName()const;
+    float GetBalance() const;
+    int GetAccountNo() const;
+
+    void AccumulateInterest();
+    void Withdraw(float amount);
+    void Deposit(float amount);
+    float GetInterestRate() const;
+};
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04a/inc/Savings.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+class Savings : public Account {
+private:
+    float m_Rate; // interest rate accumlate the interest into the Savings account
+public:
+    Savings(const std::string &name, float balance, float rate);
+    ~Savings();
+    float GetInterestRate() const ;
+    void AccumulateInterest() ;
+};
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04a/inc/Checking.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+
+class Checking : public Account {
+
+private:
+    float m_MinimumBalance {50};
+public:
+    // Constructor Inheritance
+    using Account::Account;
+
+    Checking(const std::string &name, float balance, float minbalance);
+    ~Checking();
+    void Withdraw(float amount);
+    float GetMinimumBalance()const;
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Transaction.h}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04a/inc/Transaction.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Checking.h"
+void Transact(Checking *pAccount);
+#+END_SRC
+
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04a/src/Account.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+#include <iostream> 
+int Account::s_ANGenerator = 1000;
+
+Account::Account(const std::string &name, float balance):
+    m_Name(name), m_Balance(balance){
+    m_AccNo = ++s_ANGenerator;
+    //std::cout << "Account(const std::string &, float)" << std::endl; 
+}
+Account::~Account() {
+    //std::cout << "~Account()" << std::endl;
+}
+const std::string Account::GetName() const {
+    return m_Name;
+}
+float Account::GetBalance() const {
+    return m_Balance;
+}
+int Account::GetAccountNo() const {
+    return m_AccNo;
+}
+void Account::AccumulateInterest() {
+}
+void Account::Withdraw(float amount) {
+    /*
+      Balance should be greater than 0 & the amount
+      to withdraw should be less than balance
+    ,*/
+    if (amount < m_Balance && m_Balance > 0)
+        m_Balance -= amount;
+    else {
+        //Throw an exception instead of printing a message
+        //std::cout << "Insufficient balance" << std::endl;
+        throw std::runtime_error("Insufficient balance");
+    }
+}
+void Account::Deposit(float amount) {
+    m_Balance += amount;
+}
+float Account::GetInterestRate() const {
+    return 0.0f;
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04a/src/Savings.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Savings.h"
+#include <iostream>
+
+Savings::Savings(const std::string & name, float balance, float rate) : Account(name, balance), m_Rate(rate) {
+    //std::cout << "Savings(const std::string &, float)" << std::endl;
+}
+Savings::~Savings() {
+    //std::cout << "~Savings()" << std::endl;
+}
+float Savings::GetInterestRate() const {
+    return m_Rate;
+}
+void Savings::AccumulateInterest() {
+    m_Balance += (m_Balance * m_Rate);
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04a/src/Checking.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Checking.h"
+#include <iostream>
+
+Checking::~Checking() {
+}
+
+Checking::Checking(const std::string &name, float balance, float minbalance)
+    : Account(name, balance), m_MinimumBalance(minbalance) {
+}
+void Checking::Withdraw(float amount) {
+    if ((m_Balance - amount) > m_MinimumBalance) {
+        Account::Withdraw(amount);         // call base class member function
+    }
+    else {
+        std::cout << "Invalid amount" << std::endl; 
+    }
+}
+float Checking::GetMinimumBalance() const {
+    return m_MinimumBalance;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Transaction.cpp}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04a/src/Transaction.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Transaction.h"
+
+void Transact(Checking * pAccount) {
+    std::cout << "Transaction started" << std::endl; 
+    std::cout << "Initial balance:" << pAccount->GetBalance() << std::endl;
+    pAccount->Deposit(100);
+    pAccount->AccumulateInterest();
+    pAccount->Withdraw(170);
+
+    std::cout << "Interest rate: " << pAccount->GetInterestRate() << std::endl; // polymorphical call
+    std::cout << "Final balance: " << pAccount->GetBalance() << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - Banking Application}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04a/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Transaction.h"
+
+using namespace std;
+int main()
+{
+    Checking acc("Bob", 100);  // invokes the inherited base class constructor
+    Transact(&acc);
+
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-04a/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc
+
+SRC= ./src/main.cpp ./src/Account.cpp ./src/Savings.cpp ./src/Checking.cpp ./src/Transaction.cpp
+
+app: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-04a/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc ./src/main.cpp ./src/Account.cpp ./src/Savings.cpp ./src/Checking.cpp ./src/Transaction.cpp -o app
+: ./app
+: Transaction started
+: Initial balance:100
+: Invalid amount
+: Interest rate: 0
+: Final balance: 200
+
+#+ATTR_LATEX: :options {Problem}
+#+BEGIN_infobox
+Transaction class is hardcoded to perform transactions only on
+Checking account because that's specified as argument in
+Transaction().
+#+END_infobox
+
+
+** Project - IV (Transaction Class - Base Class Argument)
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04b/inc/Account.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#ifndef ACCOUNT_H
+#define ACCOUNT_H
+
+#include <string>
+
+class Account {
+private:
+    std::string m_Name;
+    int m_AccNo;
+    static int s_ANGenerator; // account number generator
+
+protected:
+    float m_Balance; // protected members can be accessed by child classes
+
+public:
+    Account(const std::string &name, float balance);
+    ~Account();
+
+    const std::string GetName() const;
+    float GetBalance() const;
+    int GetAccountNo() const;
+
+    void AccumulateInterest();
+    void Withdraw(float amount);
+    void Deposit(float amount);
+    float GetInterestRate() const;
+};
+
+#endif // ACCOUNT_H
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04b/inc/Savings.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+class Savings : public Account {
+private:
+    float m_Rate; // interest rate accumlate the interest into the Savings account
+public:
+    Savings(const std::string &name, float balance, float rate);
+    ~Savings();
+    float GetInterestRate() const ;
+    void AccumulateInterest() ;
+};
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04b/inc/Checking.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+
+class Checking : public Account {
+
+private:
+    float m_MinimumBalance {50};
+public:
+    // Constructor Inheritance
+    using Account::Account;
+
+    Checking(const std::string &name, float balance, float minbalance);
+    ~Checking();
+    void Withdraw(float amount);
+    float GetMinimumBalance()const;
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Transaction.h}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04b/inc/Transaction.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+void Transact(Account *pAccount);
+#+END_SRC
+
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04b/src/Account.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+#include <iostream> 
+int Account::s_ANGenerator = 1000;
+
+Account::Account(const std::string &name, float balance):
+    m_Name(name), m_Balance(balance){
+    m_AccNo = ++s_ANGenerator;
+    //std::cout << "Account(const std::string &, float)" << std::endl; 
+}
+Account::~Account() {
+    //std::cout << "~Account()" << std::endl;
+}
+const std::string Account::GetName() const {
+    return m_Name;
+}
+float Account::GetBalance() const {
+    return m_Balance;
+}
+int Account::GetAccountNo() const {
+    return m_AccNo;
+}
+void Account::AccumulateInterest() {
+}
+void Account::Withdraw(float amount) {
+    /*
+      Balance should be greater than 0 & the amount
+      to withdraw should be less than balance
+    ,*/
+    if (amount < m_Balance && m_Balance > 0)
+        m_Balance -= amount;
+    else {
+        //Throw an exception instead of printing a message
+        //std::cout << "Insufficient balance" << std::endl;
+        throw std::runtime_error("Insufficient balance");
+    }
+}
+void Account::Deposit(float amount) {
+    m_Balance += amount;
+}
+float Account::GetInterestRate() const {
+    return 0.0f;
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04b/src/Savings.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Savings.h"
+#include <iostream>
+
+Savings::Savings(const std::string & name, float balance, float rate) : Account(name, balance), m_Rate(rate) {
+    //std::cout << "Savings(const std::string &, float)" << std::endl;
+}
+Savings::~Savings() {
+    //std::cout << "~Savings()" << std::endl;
+}
+float Savings::GetInterestRate() const {
+    return m_Rate;
+}
+void Savings::AccumulateInterest() {
+    m_Balance += (m_Balance * m_Rate);
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04b/src/Checking.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Checking.h"
+#include <iostream>
+
+Checking::~Checking() {
+}
+
+Checking::Checking(const std::string &name, float balance, float minbalance)
+    : Account(name, balance), m_MinimumBalance(minbalance) {
+}
+void Checking::Withdraw(float amount) {
+    if ((m_Balance - amount) > m_MinimumBalance) {
+        Account::Withdraw(amount);         // call base class member function
+    }
+    else {
+        std::cout << "Invalid amount" << std::endl; 
+    }
+}
+float Checking::GetMinimumBalance() const {
+    return m_MinimumBalance;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Transaction.cpp}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04b/src/Transaction.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Transaction.h"
+
+void Transact(Account * pAccount) {
+    std::cout << "Transaction started" << std::endl; 
+    std::cout << "Initial balance:" << pAccount->GetBalance() << std::endl;
+    pAccount->Deposit(100);
+    pAccount->AccumulateInterest();
+    pAccount->Withdraw(170);
+
+    std::cout << "Interest rate: " << pAccount->GetInterestRate() << std::endl; // polymorphical call
+    std::cout << "Final balance: " << pAccount->GetBalance() << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - Banking Application}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04b/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Transaction.h"
+#include "Savings.h"
+
+using namespace std;
+int main()
+{
+    Savings acc("Bob", 100, 0.5f);  // invokes the inherited base class constructor
+    Transact(&acc);
+
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-04b/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc
+
+SRC= ./src/main.cpp ./src/Account.cpp ./src/Savings.cpp ./src/Checking.cpp ./src/Transaction.cpp
+
+app: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-04b/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc ./src/main.cpp ./src/Account.cpp ./src/Savings.cpp ./src/Checking.cpp ./src/Transaction.cpp -o app
+: ./app
+: Transaction started
+: Initial balance:100
+: Interest rate: 0
+: Final balance: 30
+
+
+#+ATTR_LATEX: :options {Problem}
+#+BEGIN_infobox
+AccumulateInterest not executed and Interest rate still 0.
+#+END_infobox
+
+
+** Project - IV (Transaction Class - Virtual Keyword)
+
+#+ATTR_LATEX: :options {Polymorphism}
+#+BEGIN_infobox
+Polymorphism is enabled through the keyword virtual. This allows the
+function evaluation for late binding.
+#+END_infobox
+
+#+LATEX: \captionof{listing}{Account.h}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04c/inc/Account.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#ifndef ACCOUNT_H
+#define ACCOUNT_H
+
+#include <string>
+
+class Account {
+private:
+    std::string m_Name;
+    int m_AccNo;
+    static int s_ANGenerator; // account number generator
+
+protected:
+    float m_Balance; // protected members can be accessed by child classes
+
+public:
+    Account(const std::string &name, float balance);
+    ~Account();
+
+    const std::string GetName() const;
+    float GetBalance() const;
+    int GetAccountNo() const;
+
+    virtual void AccumulateInterest();
+    virtual void Withdraw(float amount);
+    void Deposit(float amount);
+    virtual float GetInterestRate() const;
+};
+
+#endif // ACCOUNT_H
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04c/inc/Savings.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+class Savings : public Account {
+private:
+    float m_Rate; // interest rate accumlate the interest into the Savings account
+public:
+    Savings(const std::string &name, float balance, float rate);
+    ~Savings();
+    float GetInterestRate() const ;
+    void AccumulateInterest() ;
+};
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04c/inc/Checking.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+
+class Checking : public Account {
+
+private:
+    float m_MinimumBalance {50};
+public:
+    // Constructor Inheritance
+    using Account::Account;
+
+    Checking(const std::string &name, float balance, float minbalance);
+    ~Checking();
+    void Withdraw(float amount);
+    float GetMinimumBalance()const;
+};
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04c/inc/Transaction.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+void Transact(Account *pAccount);
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04c/src/Account.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Account.h"
+#include <iostream> 
+int Account::s_ANGenerator = 1000;
+
+Account::Account(const std::string &name, float balance):
+    m_Name(name), m_Balance(balance){
+    m_AccNo = ++s_ANGenerator;
+    //std::cout << "Account(const std::string &, float)" << std::endl; 
+}
+Account::~Account() {
+    //std::cout << "~Account()" << std::endl;
+}
+const std::string Account::GetName() const {
+    return m_Name;
+}
+float Account::GetBalance() const {
+    return m_Balance;
+}
+int Account::GetAccountNo() const {
+    return m_AccNo;
+}
+void Account::AccumulateInterest() {
+}
+void Account::Withdraw(float amount) {
+    /*
+      Balance should be greater than 0 & the amount
+      to withdraw should be less than balance
+    ,*/
+    if (amount < m_Balance && m_Balance > 0)
+        m_Balance -= amount;
+    else {
+        //Throw an exception instead of printing a message
+        //std::cout << "Insufficient balance" << std::endl;
+        throw std::runtime_error("Insufficient balance");
+    }
+}
+void Account::Deposit(float amount) {
+    m_Balance += amount;
+}
+float Account::GetInterestRate() const {
+    return 0.0f;
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04c/src/Savings.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Savings.h"
+#include <iostream>
+
+Savings::Savings(const std::string & name, float balance, float rate) : Account(name, balance), m_Rate(rate) {
+    //std::cout << "Savings(const std::string &, float)" << std::endl;
+}
+Savings::~Savings() {
+    //std::cout << "~Savings()" << std::endl;
+}
+float Savings::GetInterestRate() const {
+    return m_Rate;
+}
+void Savings::AccumulateInterest() {
+    m_Balance += (m_Balance * m_Rate);
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04c/src/Checking.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "Checking.h"
+#include <iostream>
+
+Checking::~Checking() {
+}
+
+Checking::Checking(const std::string &name, float balance, float minbalance)
+    : Account(name, balance), m_MinimumBalance(minbalance) {
+}
+void Checking::Withdraw(float amount) {
+    if ((m_Balance - amount) > m_MinimumBalance) {
+        Account::Withdraw(amount);         // call base class member function
+    }
+    else {
+        std::cout << "Invalid amount" << std::endl; 
+    }
+}
+float Checking::GetMinimumBalance() const {
+    return m_MinimumBalance;
+}
+#+END_SRC
+
+#+BEGIN_SRC C++ :exports none :tangle ../projects/section-09/OOP-04c/src/Transaction.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Transaction.h"
+
+void Transact(Account * pAccount) {
+    std::cout << "Transaction started" << std::endl; 
+    std::cout << "Initial balance:" << pAccount->GetBalance() << std::endl;
+    pAccount->Deposit(100);
+    pAccount->AccumulateInterest();
+    pAccount->Withdraw(170);
+
+    std::cout << "Interest rate: " << pAccount->GetInterestRate() << std::endl; // polymorphical call
+    std::cout << "Final balance: " << pAccount->GetBalance() << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - Banking Application}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-04c/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Transaction.h"
+#include "Savings.h"
+
+using namespace std;
+int main()
+{
+    Savings acc("Bob", 100, 0.05f);  // invokes the inherited base class constructor
+    Transact(&acc);
+
+    return 0;
+}
+#+END_SRC
+
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-04c/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc
+
+SRC= ./src/main.cpp ./src/Account.cpp ./src/Savings.cpp ./src/Checking.cpp ./src/Transaction.cpp
+
+app: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-04c/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I./inc ./src/main.cpp ./src/Account.cpp ./src/Savings.cpp ./src/Checking.cpp ./src/Transaction.cpp -o app
+: ./app
+: Transaction started
+: Initial balance:100
+: Interest rate: 0.05
+: Final balance: 40
+
+
+#+ATTR_LATEX: :options {Polymorphism}
+#+BEGIN_infobox
+Polymorphism is enabled through the keyword virtual. This allows the
+function evaluation for late binding.
+#+END_infobox
+
+
+
+
+
+** Project - VI (Virtual Mechanism Internals I)
+
+*Polymorphism*
+- Different forms of the function are provided
+- The call is resloved at compile time or runtime
+- /Runtime polymorphism/ or /dynamic binding/
+- Implemented through virtual mechanism
+- Compiler inserts code to invoke the correct function at *runtime*
+- Automatically generated through the *virtual keyword*
+- Such functions are called *polymorphic functions*
+- Should be invoked only through a pointer or a reference
+
+*Vtable*
+- Array of function pointers called as *virtual table*
+- contains addresses of the virtual functions
+
+*Vptr*
+- Virtual poiner member of the class (automatically generated)
+- Points to the Vtable of the corresponding class
+- The *Vptr* is inherited and points to the *Vtable* of the inherited class
+
+
+** Project - VI (Virtual Mechanism Internals II)
+
+#+ATTR_LATEX: :options {Destructor}
+#+BEGIN_infobox
+The base class should always have a *virtual destructor*.
+#+END_infobox
+
+
+** Project - VII (override & final specifier C++11)
+
+#+ATTR_LATEX: :options {Final}
+#+BEGIN_infobox
+If a class is not meant to be inherited, then the class can be marked as final.
+
+/class NoInheritClas final {};/
+#+END_infobox
+
+
+#+ATTR_LATEX: :options {Final}
+#+BEGIN_infobox
+If a class is not meant to be inherited, then the class can be marked as final.
+
+/class NoInheritClas final {};/
+#+END_infobox
+
+
+#+ATTR_LATEX: :options {Override}
+#+BEGIN_infobox
+Use override to indicate you are going to override a virtual function which has therfore to mach in name and signature of the function.
+
+/void Serialize(float version) override;/
+
+This gives an compiler error if
+- no virtual function in base class exists
+- function name is different
+- signature of the function is different
+#+END_infobox
+
+
+#+ATTR_LATEX: :options {Override Final}
+#+BEGIN_infobox
+Override Final indicates child classes can not override this function anymore
+
+/void Serialize(float version) override final;/
+
+This function can not be overriden in a child class.
+#+END_infobox
+
+
+** Project - VIII (Object Slicing)
+
+#+LATEX: \captionof{listing}{Main CPP - Upcast}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-05/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Savings.h"
+#include "Checking.h"
+#include "Transaction.h"
+
+using namespace std;
+int main()
+{
+    Checking ch("Bob", 100);
+    Account *pAccount = &ch;  // Upcasting: Upcast a child class object ot a base class object
+                              // Through the base class object, can the memeber functions of
+                              // the child class invoked.
+                              // works only for poiners resp. references
+
+    Account myAccount = ch;   // Object Slicing!!
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-05/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/Account.cpp ../src/Savings.cpp ../src/Checking.cpp ../src/Transaction.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-05/ :exports results :results output
+make run
+#+END_SRC
+
+*Object Slicing*
+- A Situation in which the compiler deliberately removes some part of an object
+- Occurs when a child class object is assigned to a concrete base class object
+- The size of a child class object may be more than its base class
+- While assigning it to a base object, some part of the memory may get overwritten
+- This will lead to *memory corruption*
+- To *prevent* this, the *compiler slices* the child object, effectively
+  removing the memory that conatains it attributes
+- The object is then copied into the base object.
+
+#+ATTR_LATEX: :options {Access Child Class Member Function}
+#+BEGIN_infobox
+Ensure the base class object is either a pointer or a reference.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Main CPP - Down Cast}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-06/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Savings.h"
+#include "Checking.h"
+#include "Transaction.h"
+
+using namespace std;
+int main()
+{
+    Checking ch("Bob", 100);
+    Account *pAccount = &ch; 
+
+    // Checking *pChecking = pAccount;   // gives an error
+    Checking *pChecking = static_cast<Account*>(pAccount);   // gives an error
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-06/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/Account.cpp ../src/Savings.cpp ../src/Checking.cpp ../src/Transaction.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-06/ :exports results :results output
+make run
+#+END_SRC
+
+
+** Project - IX (typed Operator)
+
+#+LATEX: \captionof{listing}{Main CPP - typeid Function}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-07/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Savings.h"
+#include "Checking.h"
+#include "Transaction.h"
+#include <typeinfo>
+
+using namespace std;
+int main()
+{
+    Savings ch("Bob", 100, 60);
+    Account *p = &ch;
+    // Transact(&ch);
+    
+    const type_info &ti = typeid(*p);
+
+    if(ti == typeid(Savings)) {
+    cout << "p points to savings object" << endl;
+    }
+    else {
+    cout << "Not pointing to savings object" << endl;
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-07/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/Account.cpp ../src/Savings.cpp ../src/Checking.cpp ../src/Transaction.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-07/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/Account.cpp ../src/Savings.cpp ../src/Checking.cpp ../src/Transaction.cpp -o app
+: ./app
+: p points to savings object
+
+#+ATTR_LATEX: :options {typeid}
+#+BEGIN_infobox
+typeid will work at runtime on polymorphic types anf for non
+polymorpic types, it determines the type at compile type.
+#+END_infobox
+
+
+** Project - X (dynamic_cast operator)
+
+#+LATEX: \captionof{listing}{Main CPP - Dynamic Cast Operator}
+#+BEGIN_SRC C++ :tangle ../projects/section-09/OOP-08/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "Savings.h"
+#include "Checking.h"
+#include "Transaction.h"
+#include <typeinfo>
+
+using namespace std;
+int main()
+{
+    Savings ch("Bob", 100, 60);
+    // Checking ch("Bob", 100, 60);
+    Transact(&ch);
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-09/OOP-08/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/Account.cpp ../src/Savings.cpp ../src/Checking.cpp ../src/Transaction.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-09/OOP-08/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/Account.cpp ../src/Savings.cpp ../src/Checking.cpp ../src/Transaction.cpp -o app
+: ./app
+: Transaction started
+: Initial balance:100
+: Minimum balance of Checking:60
+: Invalid amount
+: Interest rate: 0
+: Final balance: 200
+
+
+#+ATTR_LATEX: :options {RTTI}
+#+BEGIN_infobox
+During compile time, the compiler creates the type information of the
+object as a type_info object, and that is stored with the class vtable at runtime.
+
+When we use type id or dynamic cast, these operators will query that
+information. So RTTI will impose overhead on the program, especially dynamic_cast.
+
+*Avoid RTTI* instead rely on polymorphism so that the corect behaviour
+is invoked polymorphic without having to know the type of the object.
+#+END_infobox
+
+
+** Abstract Class and pure virtual Functions
+
+*pure virtual Function*
+- /virtual void Serialize(float version) = 0/
+- /= 0/ is know as the *pure specifier*
+- does not have an implementation (optional)
+- cannot be invoked (except by derived classes if defined)
+- no entry in the *vtable*
+- must be overriden by the derived classes
+- if it is not overriden the child class becomes also a pure virtual function
+
+*Abstract Class*
+- has at least *one pure virtual function*
+- can contain other members
+- can *not be instantiated*, but used through a pointer or reference
+- Establishes a contract with clients
+- Used for creating *interfaces*
+
+
+** TODO Multiple (Dyamond) Inheritance

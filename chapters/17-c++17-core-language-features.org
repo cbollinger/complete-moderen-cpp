@@ -1,0 +1,986 @@
+
+* C++17 Core Language Features
+
+** Deprecated & Removed Features
+
+*** Removed Features
+- registe keyword
+- Exception specification
+- operator++(boo)
+- Trigraphs
+- auto_ptr
+- Library Functions
+  - std::random_shuffle
+  - std::unary_function
+  - std::ptr_fun
+  - std::bind1st...
+
+
+** Attributes
+- Attributes used to be compiler-specific commands that give
+  additional information to the compiler
+- That might be utilised for optimization
+- Before C++11, different compiler vendors used keywords for
+  attributes e.g. MSVC uses __declspec, GCC uses __attribute, etc
+- C++11 introduced some standardized attributes that work with all
+  standard-compilatn compilers
+- C++14 & C++17 introduced more attributes that you can use in your
+  code
+- You cannot create custom attributes
+
+*** Common Attributes
+
+| noreturn     | Indicates the function does not return (C++11)              | Function                       |
+| deprecated   | The entity is deprecated but can be used (C++14)            | variables, classes, typefs...  |
+| nodiscard    | The return value should not be discarded (C++17)            | function, class enum,...       |
+| maybe_unused | Prevents compiler for issuing warnings (++17)               | class, variables, enum decl... |
+| fall_through | Indicated deliberate fall through in caase statemen (C++17) | switch-case                    |
+
+
+#+LATEX: \captionof{listing}{Attributes }
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <cstdlib>
+#ifdef __has_include
+#if __has_include(<filesystem>)
+#define FS 1
+#include <filesystem>
+#endif
+#endif
+
+
+[[deprecated("Don't use")]]
+void Foo() {
+        
+}
+
+class [[deprecated("Not allowed")]] A{
+        
+} ;
+
+namespace [[deprecated("Not allowed")]] Old{
+}
+
+#pragma message("DO NOT USE THIS FILE")
+class [[nodiscard]] Test{
+};
+[[nodiscard]]
+int &Square(int x) {
+    int *p = new int{x} ;
+    return *p;
+}
+Test Create() {
+    return Test{} ;
+}
+
+
+[[deprecated("Use the template version instead")]]
+[[nodiscard]]
+int * CreateIntArray(size_t size) {
+    return new int[size] ;
+}
+
+template<typename T>
+[[nodiscard]] T * CreateArray(size_t size) {
+    return new T[size] ;
+}
+
+int main() {
+    // Foo();
+    // A a;
+    // Test t;
+    // CreateIntArray(5) ;
+    // CreateArray<int>(3) ;
+    // auto ret = CreateArray<int>(3) ;
+    
+    // (void)ret;
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+
+** Feature Test Macros
+
+[[https://cppreference.com/cpp/feature_test][Link to cppreference.com]]
+
+#+LATEX: \captionof{listing}{Feature Test Macros}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#ifdef __has_include
+#       if __has_include(<unistd.h>)
+#               include <filesystem>
+namespace fs = std::filesystem ;
+#       else
+#               include <experimental/filesystem>
+#               namespace fs = std::experimental::filesystem ;
+#       endif
+#endif
+
+int main() {
+    fs::path p{"C:"} ;
+        
+    std::cout << __cpp_inline_variables << std::endl; 
+    std::cout << __cpp_capture_star_this << std::endl; 
+}
+#+END_SRC
+
+#+RESULTS:
+: 201606
+: 201603
+
+
+#+ATTR_LATEX: :options {Language Features}
+#+BEGIN_infobox
+Each macro expands to an integer literal corresponding to the year and
+month when the corresponding feature has been included in the working
+draft. When a feature changes significantly, the macro will be updated
+accordingly.
+#+END_infobox
+
+
+** If & switch with Initialization
+
+#+LATEX: \captionof{listing}{If \& switch with Initialization}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+
+using namespace std;
+
+void Alloc() {
+    int* p = (int*) malloc(sizeof(int)); // p is unesceserray visible outside of is statement
+    if (p != nullptr) {
+        ,*p = 50;
+        free(p);
+    }
+    //if (initialization; condition) {
+    if (int* p = (int*) malloc(sizeof(int)); p != nullptr) {   // here not
+        ,*p = 50;
+        free(p);
+    }
+    else {
+        //Here p will be nullptr
+    }
+}
+void Write(string data) {
+    ofstream out{ "file1.txt" };   // out is unesceserray visible outside of is statement
+    if (out) {
+        if (!data.empty()) {
+            cout << "Write data: " << data << endl;
+            out << data << endl;
+        }
+        else {
+            cout << "No data to write " << endl;
+            cout << data << endl;
+        }
+    }
+    if (ofstream out{ "file.txt" }; !data.empty()) {  // here not
+        cout << "Write data: " << data << endl;
+        out << data << endl;
+    }
+    else {
+        cout << "no data to write \n";
+    }
+}
+
+void UsingSwitch(int errorCode) {
+    switch (ofstream out{ "file2.txt" }; errorCode) { // out is only visible within the scope of the switch statement
+    case 0:
+        cout << "Write data: Invalid parameter" << endl;
+        out << "Invalid parameter";
+        break;
+    case 1:
+        cout << "Write data: Could not read from file" << endl;
+        out << "Could not read from file";
+        break;
+    }
+}
+int main(){
+    Write("hello World");
+    UsingSwitch(0x1) ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Write data: hello World
+: Write data: hello World
+: Write data: Could not read from file
+
+#+ATTR_LATEX: :options {If and Switch with initialization}
+#+BEGIN_infobox
+We don't have to expose unnecessary variables to the outer scope
+#+END_infobox
+
+
+** Inline Variables
+
+*** Declaration  in header files leads to issues
+
+#+Caption: vars.h
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/01/inc/vars.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+int global;
+#+END_SRC
+
+#+Caption: a.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/01/src/a.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "vars.h"
+#+END_SRC
+
+#+Caption: b.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/01/src/b.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "vars.h"
+#+END_SRC
+
+#+Caption: main.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/01/src/main.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "vars.h"
+
+using namespace std;
+
+int main() {
+    
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-17/Inline/01/Makefile :exports none :padline no
+CXX=g++
+
+INCDIRS := \
+	inc
+
+CPPFLAGS := $(addprefix -I,$(INCDIRS))
+
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors
+
+SRCDIR := src
+SRC := \
+	$(SRCDIR)/main.cpp \
+	$(SRCDIR)/a.cpp \
+	$(SRCDIR)/b.cpp
+
+Target := app
+
+$(Target): $(SRC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-17/Inline/01 :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -Iinc -std=c++17 -Wall -Wextra -fno-elide-constructors src/main.cpp src/a.cpp src/b.cpp src/main.cpp src/a.cpp src/b.cpp -o app
+
+
+#+begin_src bash
+/ usr/lib64/gcc/x86_64-suse-linux/15/../../../../x86_64-suse-linux/bin/ld: /tmp/ccIByloA.o:(.bss+0x0): multiple definition of `global'; /tmp/ccskRSob.o:(.bss+0x0): first defined here
+/ usr/lib64/gcc/x86_64-suse-linux/15/../../../../x86_64-suse-linux/bin/ld: /tmp/ccqvHxyt.o:(.bss+0x0): multiple definition of `global'; /tmp/ccskRSob.o:(.bss+0x0): first defined here
+/ usr/lib64/gcc/x86_64-suse-linux/15/../../../../x86_64-suse-linux/bin/ld: /tmp/cc2SAHiX.o:(.bss+0x0): multiple definition of `global'; /tmp/ccskRSob.o:(.bss+0x0): first defined here
+/ usr/lib64/gcc/x86_64-suse-linux/15/../../../../x86_64-suse-linux/bin/ld: /tmp/cc2SAHiX.o: in function `main':
+  main.cpp:(.text+0x0): multiple definition of `main'; /tmp/ccskRSob.o:main.cpp:(.text+0x0): first defined here
+/  usr/lib64/gcc/x86_64-suse-linux/15/../../../../x86_64-suse-linux/bin/ld: /tmp/cc7OVPEK.o:(.bss+0x0): multiple definition of `global'; /tmp/ccskRSob.o:(.bss+0x0): first defined here
+/  usr/lib64/gcc/x86_64-suse-linux/15/../../../../x86_64-suse-linux/bin/ld: /tmp/cc5Bd2nF.o:(.bss+0x0): multiple definition of `global'; /tmp/ccskRSob.o:(.bss+0x0): first defined here
+  collect2: error: ld returned 1 exit status
+  make: *** [Makefile:19: app] Error 1
+
+#+end_src
+
+
+#+ATTR_LATEX: :options {The One Definition Rule}
+#+BEGIN_infobox
+The global name such a function or a variable can be defined exactly
+only once throughout the program. see p425 TC++PL
+#+END_infobox
+
+
+*** Declaration as extern in H-File
+
+
+#+ATTR_LATEX: :options {Before C++17}
+#+BEGIN_infobox
+Declare the variable/function in a header file with EXTERN and define it just one time in a CPP File
+#+END_infobox
+
+#+Caption: vars.h
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/02/inc/vars.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+// DECLARATION
+extern int global;  
+extern void setGlobal(int);
+extern int getGlobal(void);
+#+END_SRC
+
+#+Caption: a.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/02/src/a.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "vars.h"
+int global = 42;                        // DEFINITION!!! - Default Value
+void setGlobal(int x) { global = x;}    // DEFINITION of setter
+
+#+END_SRC
+
+#+Caption: b.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/02/src/b.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "vars.h"
+int getGlobal() { return global; }       // DEFINITION of getter
+#+END_SRC
+
+#+Caption: main.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/02/src/main.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "vars.h"
+
+using namespace std;
+
+int main() {
+    setGlobal(100);
+    cout << "The value of global is: " << getGlobal() << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-17/Inline/02/Makefile :exports none :padline no
+CXX=g++
+
+INCDIRS := \
+	inc
+
+CPPFLAGS := $(addprefix -I,$(INCDIRS))
+
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors
+
+SRCDIR := src
+SRC := \
+	$(SRCDIR)/main.cpp \
+	$(SRCDIR)/a.cpp \
+	$(SRCDIR)/b.cpp
+
+Target := app
+
+$(Target): $(SRC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-17/Inline/02 :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -Iinc -std=c++17 -Wall -Wextra -fno-elide-constructors src/main.cpp src/a.cpp src/b.cpp -o app
+: ./app
+: The value of global is: 100
+
+
+*** C++17 with Inline
+#+Caption: vars.h
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/03/inc/vars.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#pragma once
+inline int global ;
+class Test {
+    public:
+	inline static int m_Data = 50 ;
+	constexpr static int PATHSIZE=  255 ;
+	int x = 5 ;
+};
+#+END_SRC
+
+#+Caption: a.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/03/src/a.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "vars.h"
+#+END_SRC
+
+#+Caption: b.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/03/src/b.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "vars.h"
+#+END_SRC
+
+#+Caption: main.cpp
+#+BEGIN_SRC C++ :tangle ../projects/section-17/Inline/03/src/main.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include "vars.h"
+
+using namespace std;
+
+int main() {
+    global = 5;
+    Test t;
+    cout << "Test::m_Data: "<< t.m_Data << "Global: "<< global << endl;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-17/Inline/03/Makefile :exports none :padline no
+CXX=g++
+
+INCDIRS := \
+	inc
+
+CPPFLAGS := $(addprefix -I,$(INCDIRS))
+
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors
+
+SRCDIR := src
+SRC := \
+	$(SRCDIR)/main.cpp \
+	$(SRCDIR)/a.cpp \
+	$(SRCDIR)/b.cpp
+
+Target := app
+
+$(Target): $(SRC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
+
+run: app
+	./app
+
+clean:
+	rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-17/Inline/03 :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -Iinc -std=c++17 -Wall -Wextra -fno-elide-constructors src/main.cpp src/a.cpp src/b.cpp -o app
+: ./app
+: Test::m_Data: 50Global: 5
+
+
+** Nested Namespaces
+
+#+LATEX: \captionof{listing}{Nested Namespaces}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+namespace A {
+    namespace B {
+	namespace C {
+	}
+    }
+}
+
+namespace A::B::C {
+
+}
+
+int main(){
+    A::B::CC::Foo();
+    using A::B::CC::Foo;
+    using namespace A::B::C;
+    foo();
+    
+    return 0;
+}
+#+END_SRC
+
+
+** noexcept
+
+#+LATEX: \captionof{listing}{Exception Specification C++11}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++11 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+// Exception Specification C++98
+// Foo thows int and float only.
+void Foo() noexcept {
+
+}
+
+void Bar() {
+
+}
+
+
+int main(){
+
+    void(*p)() noexcept;
+
+    p = Foo;
+    p = Bar;
+
+    p(); // p can throw an excepeption -> the exception specification does not hold
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+
+#+LATEX: \captionof{listing}{Exception Specification C++17}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+// Exception Specification C++98
+// Foo thows int and float only.
+void Foo() noexcept {
+
+}
+
+void Bar() {
+
+}
+
+
+int main(){
+
+    void(*p)() noexcept;
+
+    p = Foo;
+    p = Bar;
+
+    p(); // C++17 gives an error
+    return 0;
+}
+#+END_SRC
+
+
+** constexpr Lambda & Capture by *this
+
+#+LATEX: \captionof{listing}{constexpr Lambda \& Capture by *this}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#pragma region constexpr lambda
+#include <iostream>
+#include <sstream>
+
+using namespace std;
+
+//////////// constexpr lambda
+template<typename T, int size, typename Callback>
+void ForEach(T(&arr)[size], Callback operation) {
+    for (int i = 0; i < size - 1; ++i) {
+        operation(arr[i]);
+    }
+}
+
+class Product {
+    string name;
+    float price;
+public:
+    Product(const string &n, float p) :name(n), price(p) {
+
+    }
+    void AssignFinalPrice() {
+        float taxes[]{ 12, 5, 5 };
+        float basePrice{ price };
+        //Capture this
+        ForEach(taxes, [basePrice, this](float tax) {
+            float taxedPrice = basePrice * tax / 100;
+            price += taxedPrice;
+        });
+    }
+    float GetPrice()const {
+        return price;
+    }
+
+    // copies object by value
+    auto GetDescription() {
+        return [*this](const string& header) {
+            ostringstream ost;
+            ost << header << endl;
+            ost << "Name : " << name << endl;
+            ost << "Price : " << price << endl;
+            return ost.str();
+        };
+                
+    }
+};
+
+void UsingLambda() {
+    Product *p = new Product { "Watch", 500 };
+    p->AssignFinalPrice();
+    // cout << p->GetPrice() << endl;
+    auto desc = p->GetDescription() ;
+    delete p ;                                 // deletes the pointer to member of the clas
+    cout << desc("##############") << endl;
+}
+void UsingConstExprLambda() {
+    auto f = [](int x,int y) {                   // the lambda becomes a constexpr function
+        return x + y ;                           // as soon as the criteria for constexpr are fulfilled
+    };
+    constexpr auto sum = f(3,5) ;                 // computed at compile time
+    printf("%d", sum) ;
+}
+
+
+
+int main() {
+
+    UsingLambda();
+    UsingConstExprLambda();
+
+    return 0;
+}
+
+
+#pragma endregion
+#+END_SRC
+
+#+RESULTS:
+: ##############
+: Name : Watch
+: Price : 585
+: 
+
+
+** Structured Bindings
+
+- Allows initializing of multiple variables with the elements or
+  members of an object
+- The object could be object of a class/struct or an array
+- For objects of class, the members should be *public*
+- The number of variable should match with the number of elements in
+  the object
+
+  /auto [variables] = object;/
+  /<cv qualifiers> auto &[variables] = object;/
+
+- Creates an *anonymus entity* which is a copy of the object
+- This anonymous entity cannot be accessed directly
+- We can only access the members through the *structured binding*
+- Useful when you wan to read the data of each member to separate
+  variables (or assign)
+- Makes the code more readable by binding the value directly to a name
+  that conveys the real purpose of the data
+
+#+LATEX: \captionof{listing}{Structured Bindings}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <map>
+
+struct Person {
+    std::string m_Name ;
+    int m_Age ;
+    Person() = default ;
+    Person(const std::string &name, int age):m_Name{name}, m_Age{age}{}
+};
+
+struct S1 {
+    int arr1[8] ;
+    char ch1[256] ;
+};
+
+int main() {
+        
+    Person p{"Ayaan", 14} ;
+    /*auto name = p.m_Name ;
+      auto age = p.m_Age ;*/
+
+    const auto &[name, age] = p ;       // note the reference (by value also possible)
+    // age = 10 ;                       // changes age of p.m_Age as long as not const
+    std::cout << p.m_Age << std::endl;
+
+    std::pair<int,int> p1{3,5} ;
+    auto [key, value] = p ;
+
+    std::map<int, std::string> errorInfo{ {1, "Not available"}, {2, "Port is in use"}} ;
+
+    // a bit tedisous because because using pair syntax
+    for(auto err : errorInfo) {
+	std::cout << err.first << ":" << err.second << std::endl; 
+    }
+
+    // access with structured binding
+    for(auto [key, value] : errorInfo) {
+	std::cout << key << ":" << value << std::endl; 
+    }
+
+    int arr[] = {1,2,3} ;
+    auto [a, b, c] = arr ;
+
+    auto arr2 = arr ;               // arr2 is a pointer not an array
+
+    S1 s ;
+    auto [s1, s2] = s ;            // but s1 and s2 are still array type
+
+ }
+#+END_SRC
+
+#+RESULTS:
+: 14
+: 1:Not available
+: 2:Port is in use
+
+
+** Expression Evaluation Order
+
+- In previous standars, the evaluation order of sub-expressions in
+  function parameters was unpredictable
+- IN the following statement, it is unspecified in which order the
+  functions will be invoked
+
+  /using namespace std;/
+  /cout << a() << b() << c() ;/
+
+ /cout.operator<<(a()).operator<<(b()).operator<<(c());/
+
+ In total 6 functions calls: a(), b(), c() and 3 times operator()
+
+
+#+LATEX: \captionof{listing}{Evaluation Order C++98}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++98 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+class EvaluationOrder {
+public:
+    EvaluationOrder& First(int) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        return *this;
+    }
+    EvaluationOrder& Second(int) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        return *this;
+    }
+};
+int FirstSubExpression(int) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    return 0 ;
+
+}
+int SecondSubExpression(int) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    return 0 ;
+
+}
+int main() {
+    EvaluationOrder eo ;
+    eo.First(FirstSubExpression(0)).Second(SecondSubExpression(0)) ;
+}
+#+END_SRC
+
+#+RESULTS:
+: int FirstSubExpression(int)
+: EvaluationOrder& EvaluationOrder::First(int)
+: int SecondSubExpression(int)
+: EvaluationOrder& EvaluationOrder::Second(int)
+
+
+
+#+LATEX: \captionof{listing}{Evaluation Order C++17}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+class EvaluationOrder {
+public:
+    EvaluationOrder& First(int) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        return *this;
+    }
+    EvaluationOrder& Second(int) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        return *this;
+    }
+};
+int FirstSubExpression(int) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    return 0 ;
+
+}
+int SecondSubExpression(int) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    return 0 ;
+
+}
+int main() {
+    EvaluationOrder eo ;
+    eo.First(FirstSubExpression(0)).Second(SecondSubExpression(0)) ;
+}
+#+END_SRC
+
+#+RESULTS:
+: int FirstSubExpression(int)
+: EvaluationOrder& EvaluationOrder::First(int)
+: int SecondSubExpression(int)
+: EvaluationOrder& EvaluationOrder::Second(int)
+
+
+#+ATTR_LATEX: :options {GNU Compiler - no Interleaving of evaluation}
+#+BEGIN_infobox
+g++ already evaluates sub expressions without interleaving since C++98.
+#+END_infobox
+
+
+** Mandatory Copy Elision - I
+
+
+#+LATEX: \captionof{listing}{C++14 Optional Copy Elision }
+#+BEGIN_SRC C++ :exports both :flags "-std=c++14 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+class Number {
+public:
+    Number(int value) {
+        std::cout << "Parameterized ctor\n" ;
+    }
+    Number(const Number &) {
+        std::cout << "Copy ctor\n" ;
+    }
+    Number(Number &&){
+        std::cout << "Move ctor\n" ;
+    }
+};
+
+void Foo(Number n) {
+        
+} 
+
+Number Create() {
+    // Number n{0} ;
+    // return n ;               // copy elision - named return value optimization
+                             // move operator applied
+
+    return Number{0} ;    // return value optimization
+}
+// template<typename T, typename...Args>
+// T Create(Args&&...args) {
+//     return T{args...} ;
+// }
+int main() {
+
+    // copy elision is applied in all these cases
+    
+    Number n1 = Number{3} ;
+    Foo(Number {3} ) ;
+
+    auto n2 = Create() ;
+
+    // auto n3 = Create<Number>(0) ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Parameterized ctor
+: Move ctor
+: Parameterized ctor
+: Move ctor
+: Parameterized ctor
+: Move ctor
+: Move ctor
+
+
+
+#+LATEX: \captionof{listing}{C++14  Optional Copy Elison: Copy- and Move Constructors Deleted}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++14 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#define DELETE_COPY_MOVE
+class Number {
+public:
+    Number(int value) {
+        std::cout << "Parameterized ctor\n" ;
+    }
+#ifdef DELETE_COPY_MOVE
+    Number(const Number &) = delete ;
+    Number(Number &&) = delete ;
+#else
+    Number(const Number &) {
+        std::cout << "Copy ctor\n" ;
+    }
+    Number(Number &&){
+        std::cout << "Move ctor\n" ;
+    }
+#endif
+};
+
+void Foo(Number n) {
+        
+} 
+
+Number Create() {
+    //Number n{0} ;
+    //return n ;
+
+    return Number{0} ;
+}
+
+int main() {
+
+    // copy elision is applied in all these cases  
+    Number n1 = Number{3} ;
+    Foo(Number {3} ) ;
+
+    auto n2 = Create() ;
+
+    // auto n3 = Create<Number>(0) ;
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+
+
+** Mandatory Copy Elision - II
+
+
+#+LATEX: \captionof{listing}{C++17 Mandatory Copy Elision - w/o Copy and Move Constructors}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#define DELETE_COPY_MOVE
+class Number {
+public:
+    Number(int value) {
+        std::cout << "Parameterized ctor\n" ;
+    }
+#ifdef DELETE_COPY_MOVE
+    Number(const Number &) = delete ;
+    Number(Number &&) = delete ;
+#else
+    Number(const Number &) {
+        std::cout << "Copy ctor\n" ;
+    }
+    Number(Number &&){
+        std::cout << "Move ctor\n" ;
+    }
+#endif
+};
+
+void Foo(Number n) {
+        
+} 
+
+Number Create() {
+    //Number n{0} ;
+    //return n ;
+
+    return Number{0} ;
+}
+template<typename T, typename...Args>
+T Create(Args&&...args) {
+    return T{args...} ;
+}
+int main() {
+    Number n1 = Number{3} ;
+    Foo(Number{3}) ;
+
+    auto n2 = Create() ;
+
+    auto n3 = Create<Number>(0) ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Parameterized ctor
+: Parameterized ctor
+: Parameterized ctor
+: Parameterized ctor
+
+#+ATTR_LATEX: :options {Mandatory Copy Elison}
+#+BEGIN_infobox
+It is mandatory for expressions where you'are initializing an L-value
+with an R-value and those expressions would be when a function returns
+a temporary by value, when an object is initialized by R-value and
+when a function that accepts an L-value is invoked with R-value argument.
+#+END_infobox

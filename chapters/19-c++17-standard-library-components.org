@@ -1,0 +1,1496 @@
+
+* C++17 Standard Library Component
+
+** std::optional -I
+
+- A new library *type* that can be used when a function may or may not return a value
+- If it does not return a value, a common way is to compare with a
+  predefined value such a 0, nullptr, true/false, etc
+- This leads to different kinds of checks for different types
+- /std::optional<T>/ can represent a type that may or may not contain a value
+  - often called a *nullable type*
+
+*Properties*
+- No value is represented by /std::nullopt/
+- /std::optional/ is a value type - so, it can be copied through deep copy
+- Does not need to allocate any memory on heap
+- You cannot store references inside /std::optional/
+- Provides several overloaded operators and functions to access the value inside safely
+- May throw /std::bad_optional_access/ 
+
+
+#+LATEX: \captionof{listing}{std::optional}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <optional>
+#include <cstring>
+
+const char * GetErrorString(int errorNo) {
+    switch (errorNo) {
+    case 0:
+        return "Invalid input" ;
+    case 1:
+        return "Connection not established yet\n" ;
+    default:
+        return "" ;
+    }
+}
+
+int main() {
+
+// C++11: return no value
+    auto message = GetErrorString(1) ;
+    if(std::strlen(message) != 0) {
+        std::cout << message << std::endl; 
+    }
+    else {
+        std::cout << "Unknown error number\n" ;
+    }
+
+// C++17: Handling std::optional type
+    // std::optional<int> value = 5;         // Copy initialization
+    std::optional value {5};                 // Direct initialization
+    // auto value = std::make_optional(5);   // Initialization from a factory function
+
+    if(value.has_value()) {
+        std::cout << value.value() << std::endl ;  // safe way of reading the value of optional
+    }
+    if(value) {
+        std::cout << *value << std::endl; 
+    }
+    
+    value = 1 ;
+    value.reset() ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Connection not established yet
+: 
+: 5
+: 5
+
+
+** std::optional - II
+
+#+LATEX: \captionof{listing}{std::optional - II}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <optional>
+#include <cstring>
+
+std::optional<const char *> GetErrorStringOp(int errorNo) {
+    switch (errorNo) {
+    case 0:
+        return "Invalid input" ;
+    case 1:
+        return "Connection not established yet" ;
+    default:
+        return std::nullopt ;
+    }
+}
+
+int main() {
+
+    try{
+        auto errorMessage = GetErrorStringOp(4) ;
+        std::cout << errorMessage.value_or("Default") << std::endl ;     // option 1: C++17, use value_or
+
+        errorMessage = GetErrorStringOp(1) ;                             // option 2: C++17, throws exception
+        std::cout << errorMessage.value() << std::endl ;
+
+        errorMessage = GetErrorStringOp(4) ;
+        if(errorMessage.has_value()) {                                   // option 3, to check for value
+            std::cout << errorMessage.value() << std::endl ;
+        }else {
+            std::cout << "Unknown error number\n" ;
+        }
+
+        errorMessage = GetErrorStringOp(4) ;        
+        if(errorMessage) {                                               // option 4, to check for value
+            //Undefined behavior when no value exists in optional
+            std::cout << *errorMessage << std::endl ;
+        }else {
+            std::cout << "Unknown error number\n" ;
+        }
+
+    }catch(std::exception &ex) {
+        std::cout << "Exception:"<< ex.what() << std::endl ;
+    }   
+
+    return 0 ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Default
+: Connection not established yet
+: Unknown error number
+: Unknown error number
+
+
+** std::optional - III
+
+#+LATEX: \captionof{listing}{std::optional as class members}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <optional>
+
+
+class ContactName {
+    std::string first ;
+    std::optional<std::string> middle ;
+    std::string last ;
+
+public:
+
+    ContactName(const std::string& f, const std::optional<std::string>& m, const std::string& l)
+        : first{f},
+          middle{m},
+          last{l} {
+    }
+
+    void Print() {
+        std::cout << first << ' ' ;
+        std::cout << middle.value_or("")<< ' ' ;
+        std::cout << last << ' ' ;
+        std::cout << '\n' ;
+    }
+};
+int main() {
+
+    ContactName n1{"Ernst", "Christian", "Bollinger"} ;
+    ContactName n2{"Christian", std::nullopt, "Bollinger"} ;  // nullopt argument avoids the creation of optiona with empty string in constructor
+
+    n1.Print() ;
+    n2.Print() ;
+
+    return 0 ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Ernst Christian Bollinger 
+: Christian  Bollinger 
+
+
+** std::variant - I
+
+- /std::variant/ is a *type-safe* replacement for *union* type
+- Just like union, it uses the storage of the largest member
+- The first memeber is always *default initialized* if variant is
+  default constructed
+- Alternatively, you can initialize any member of the variant during construction
+- Members are destroyed properly (in contrast to union)
+- Throws /bad_variant_access/ on invalid acces
+
+#+LATEX: \captionof{listing}{std::variant I - Usage}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <variant>
+#include <string>
+
+using namespace std;
+
+int main() {
+    using namespace std::string_literals ;
+
+    try {
+        std::variant<std::string, int> v{ 7 };
+        auto val = std::get<int>(v);
+        // auto val = std::get<string>(v);         // throws an exception 
+        cout << val << endl;
+
+        auto activeIndex = v.index();
+        cout << activeIndex << endl;
+        cout << get<1>(v) << endl;
+        // cout << get<activeIndex>(v) << endl;   // activeIndex is not a compile time constant
+
+        auto p = get_if<string>(&v);                 // get a pointer to the active index/element
+        if(p == nullptr) {
+            cout << "Not Active" << endl;
+        }
+        else {
+            cout << *p << endl;
+        }       
+    }
+    catch (std::exception& ex) {
+        std::cout << "Exception:" << ex.what() << std::endl;
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: 7
+: 1
+: 7
+: Not Active
+
+
+** std::variant - II
+
+
+#+LATEX: \captionof{listing}{std::variant II - with Number Class}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <variant>
+#include <string>
+
+using namespace std;
+
+struct Number {
+    int m_Num{} ;
+    Number(int num): m_Num{num} {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+    ~Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(const Number& other) {
+        m_Num = other.m_Num ;
+                
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(Number&& other) noexcept {
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number& operator=(const Number& other) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other){
+            return *this;
+        }
+        m_Num = other.m_Num ;
+                
+        return *this;
+    }
+
+    Number& operator=(Number&& other) noexcept {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other)
+            return *this;
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+                
+        return *this;
+    }
+    friend std::ostream& operator <<(std::ostream &out, const Number &n) {
+        return out << n.m_Num ;
+    }
+};
+
+int main() {
+    using namespace std::string_literals ;
+    try {
+        std::variant<std::string, int, Number> v{int{7}};
+
+        v = Number{1} ;
+        v.emplace<Number>(100) ;
+        std::get<Number>(v) = 100 ;
+        auto val = std::get<Number>(v);
+	val = std::get<2>(v);
+
+	auto activeIndex = v.index();
+	(void)activeIndex;
+
+	// auto p = std::get_if<std::string>(&v);
+	auto p = std::get_if<Number>(&v);
+	if (p == nullptr) {
+	    std::cout << "Not active\n";
+	}
+	else {
+	    std::cout << *p << std::endl;
+	}
+	
+    }
+    catch (std::exception& ex) {
+        std::cout << "Exception:" << ex.what() << std::endl;
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Number::Number(int)
+Number::Number(Number&&)
+Number::~Number()
+Number::~Number()
+Number::Number(int)
+Number::Number(int)
+Number& Number::operator=(Number&&)
+Number::~Number()
+Number::Number(const Number&)
+Number& Number::operator=(const Number&)
+100
+Number::~Number()
+Number::~Number()
+#+end_example
+
+
+** std::variant - III std::visit
+
+#+LATEX: \captionof{listing}{std::variant II std::visit Visito}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <variant>
+#include <string>
+struct Number {
+    int m_Num{} ;
+    Number(int num): m_Num{num} {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+    ~Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(const Number& other) {
+        m_Num = other.m_Num ;
+                
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(Number&& other) noexcept {
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number& operator=(const Number& other) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other){
+            return *this;
+        }
+        m_Num = other.m_Num ;
+                
+        return *this;
+    }
+
+    Number& operator=(Number&& other) noexcept {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other)
+            return *this;
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+                
+        return *this;
+    }
+    friend std::ostream& operator <<(std::ostream &out, const Number &n) {
+        return out << n.m_Num ;
+    }
+};
+
+struct Visitor {
+    void operator()(const std::string &s)const {
+        std::cout << "string:" <<  s << std::endl; 
+                
+    }
+    void operator()(int x)const {
+        std::cout << "int:" << x << std::endl ;
+    }
+    void operator()(const Number &n)const {
+        std::cout << "Number:" << n << std::endl; 
+                
+    }
+};
+
+int main() {
+    using namespace std::string_literals ;
+    try {
+        std::variant<std::string, int, Number> v{7 }; // active member: integer
+	std::visit(Visitor{}, v) ;
+
+	v = "C++" ;                       
+	std::visit(Visitor{}, v) ;  // active member: string
+
+	v.emplace<Number>(100) ;
+	std::visit(Visitor{}, v) ; // active member: Number
+                
+    }
+    catch (std::exception& ex) {
+        std::cout << "Exception:" << ex.what() << std::endl;
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: int:7
+: string:C++
+: Number::Number(int)
+: Number:100
+: Number::~Number()
+
+
+#+LATEX: \captionof{listing}{std::variant II std::visit Modifier}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <variant>
+#include <string>
+struct Number {
+    int m_Num{} ;
+    Number(int num): m_Num{num} {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+    ~Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(const Number& other) {
+        m_Num = other.m_Num ;
+                
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(Number&& other) noexcept {
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number& operator=(const Number& other) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other){
+            return *this;
+        }
+        m_Num = other.m_Num ;
+                
+        return *this;
+    }
+
+    Number& operator=(Number&& other) noexcept {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other)
+            return *this;
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+                
+        return *this;
+    }
+    friend std::ostream& operator <<(std::ostream &out, const Number &n) {
+        return out << n.m_Num ;
+    }
+};
+
+struct Visitor {
+    void operator()(const std::string &s)const {
+        std::cout << "string:" <<  s << std::endl; 
+                
+    }
+    void operator()(int x)const {
+        std::cout << "int:" << x << std::endl ;
+    }
+    void operator()(const Number &n)const {
+        std::cout << "Number:" << n << std::endl; 
+                
+    }
+};
+struct Modifier {
+    void operator()( std::string &s)const {
+        s += " modified string" ;
+    }
+    void operator()(int& x)const {
+        x += 1000 ;
+    }
+    void operator()( Number &n)const {
+        n = 999 ;
+    }
+};
+int main() {
+    using namespace std::string_literals ;
+    try {
+        std::variant<std::string, int, Number> v{7 }; // active member: integer
+	std::visit(Modifier{}, v) ;
+	std::visit(Visitor{}, v) ;
+
+	v = "C++" ;                       
+	std::visit(Modifier{}, v) ; // active member: string
+	std::visit(Visitor{}, v) ;
+
+	v.emplace<Number>(100) ;
+	std::visit(Modifier{}, v) ; // active member: Number
+	std::visit(Visitor{}, v) ;
+	
+    }
+    catch (std::exception& ex) {
+        std::cout << "Exception:" << ex.what() << std::endl;
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: int:1007
+: string:C++ modified string
+: Number::Number(int)
+: Number::Number(int)
+: Number& Number::operator=(Number&&)
+: Number::~Number()
+: Number:999
+: Number::~Number()
+
+
+#+LATEX: \captionof{listing}{std::variant II std::visit Lambda Expression}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <variant>
+#include <string>
+struct Number {
+    int m_Num{} ;
+    Number(int num): m_Num{num} {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+    ~Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(const Number& other) {
+        m_Num = other.m_Num ;
+                
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(Number&& other) noexcept {
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number& operator=(const Number& other) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other){
+            return *this;
+        }
+        m_Num = other.m_Num ;
+                
+        return *this;
+    }
+
+    Number& operator=(Number&& other) noexcept {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other)
+            return *this;
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+                
+        return *this;
+    }
+    friend std::ostream& operator <<(std::ostream &out, const Number &n) {
+        return out << n.m_Num ;
+    }
+};
+
+int main() {
+    using namespace std::string_literals ;
+    try {
+
+	std::variant<std::string, int, Number> v{7 };            // active member: integer
+	
+	auto visitor = [](auto &x) {
+            using T = std::decay_t<decltype(x)> ;                // decay the reference to baskic types
+            if constexpr (std::is_same_v<T, int>){               // comparing baseic types
+                std::cout << "int : " << x << std::endl; 
+            }else if constexpr (std::is_same_v<T, std::string>){ // comparing baseic types
+                std::cout << "string:" << x << std::endl; 
+            }else if constexpr(std::is_same_v<T, Number>){       // comparing baseic types
+                std::cout << "Number:" << x << std::endl ;
+            }
+        } ;
+
+	v = "using lambda" ;                                     // active member: string
+        std::visit(visitor,v) ;
+        v = 555 ;                                                // active member: integer
+        std::visit(visitor,v) ;
+        v = Number{3} ;                                          // active member: Number
+        std::visit(visitor,v) ;
+                
+    }
+    catch (std::exception& ex) {
+        std::cout << "Exception:" << ex.what() << std::endl;
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: string:using lambda
+: int : 555
+: Number::Number(int)
+: Number::Number(Number&&)
+: Number::~Number()
+: Number:3
+: Number::~Number()
+
+
+** std::any
+
+*Type Safety*
+- C++ is a strongly typed language
+- Object are declared with specific type and that cannot be changed later
+- In some cases, we may require an object that should hold values of different types
+- This is difficult to achieve in C++, except through /void */
+- However, such pointers have a certain disadvantage
+  - Not typesafe
+  - No way to know the type
+  - Cannot access the value in a type-safe way
+  - Need to manage the object lifetime
+
+*std::any*
+- C++17 introduced std::any
+- A *wrapper* that can hold value of any arbitrary type in a *type-safe* way
+- Replacement for /void */
+- Contains both the value & its type
+- The value is accessed throuhg /any_cast<>/
+- May allocate memory on the heap
+- Throws exception of type /bad_any_cast/ on wrong type access
+
+#+LATEX: \captionof{listing}{std::variant II std::visit Visito}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <any>
+#include <iostream>
+struct Number {
+    int m_Num{} ;
+    Number(int num): m_Num{num} {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+    ~Number() {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(const Number& other) {
+        m_Num = other.m_Num ;
+                
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number(Number&& other) noexcept {
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+
+    Number& operator=(const Number& other) {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other){
+            return *this;
+        }
+        m_Num = other.m_Num ;
+                
+        return *this;
+    }
+
+    Number& operator=(Number&& other) noexcept {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        if (this == &other)
+            return *this;
+        m_Num = other.m_Num ;
+        other.m_Num = 0 ;
+                
+        return *this;
+    }
+    friend std::ostream& operator <<(std::ostream &out, const Number &n) {
+        return out << n.m_Num ;
+    }
+};
+void Basics() {
+    using namespace std::string_literals ;
+    std::any v1 = 5;
+    // v1 = "Hello"s ;
+    if(v1.has_value()) {
+        if(v1.type() == typeid(int)) {
+            std::cout << std::any_cast<int>(v1) << std::endl; 
+        }
+    }
+    v1.reset() ;
+    try {
+        std::cout << std::any_cast<std::string>(v1) << std::endl; 
+    }catch(std::exception &ex) {
+        std::cout << "Exception:" << ex.what() << std::endl; 
+    }
+}
+int main() {
+    using namespace std::string_literals ;
+    // Basics();
+    
+    // std::any number{Number{5}} ;
+    auto n1 = std::make_any<Number>(5) ;                // instantiation of n1
+    n1.reset() ;
+    n1 = 7 ;
+    std::cout << std::any_cast<int>(n1) << std::endl ;   
+
+    auto &n2 = std::any_cast<int&>(n1) ;
+    n2 = 100 ;
+    std::cout << std::any_cast<int>(n1) << std::endl ;   // reference to n1
+
+    auto p = std::any_cast<int>(&n1) ;
+    *p = 200 ;
+    std::cout << *std::any_cast<int*>(p) << std::endl;   // points to n1
+        
+}
+#+END_SRC
+
+#+RESULTS:
+: Number::Number(int)
+: Number::~Number()
+: 7
+: 100
+: 200
+
+
+** std::string_view - I
+
+*std::string_view*
+- Allows us to deal with charachter sequenceis without allocating memory
+- Can be considered as a kind of reference to a charachter sequence
+- Can be used where ever a *non-modifialbe string* is required
+- It simply stores a pointer to the character array along with its length
+- It is fast an cheap to copy
+- However, it should be used carefully as it can lead to bugs
+
+*Properties:*
+- Underlying sequence is *read-only*
+- It can be accessed through /data()/ method
+  - may return *nullptr*
+  - a charachter sequence with or without null terminator
+- You can only assign a new value, swap values and shrink it to a
+  subset of character sequence
+- Character sequence is *not guaranteed* to be *null-terminated*
+  - consequently, *may* not work with C string functions
+- No allocator support (because of read only)
+
+#+ATTR_LATEX: :options {:exports results}
+#+BEGIN_infobox
+The code cannot be printed here because it contains literal which
+is missunterstood by the latex compiler.
+#+END_infobox
+
+*** COMMENT no print 
+#+LATEX: \captionof{listing}{std::string-view I}
+#+BEGIN_SRC C++ :exports results :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string_view>
+
+int main() {
+    using namespace std::string_view_literals ;
+
+    std::string_view sv1 = "Hello world" ;          // Direct initialization
+
+    std::string str1{"Hello"} ;                     // Initializing with std::string
+    std::string_view sv2 = str1 ;
+    (void) sv2;
+    auto sv3 = "Using\0literals"sv ;                // Using literals
+
+    std::cout << "Size:" << sv3.length() << std::endl;
+    std::cout << sv3 << std::endl;
+
+    std::cout << "data() " << sv3.data() << std::endl; 
+
+    std::cout << sv3[0] << std::endl;               // no bound checking
+    std::cout << sv3.at(0) << std::endl ;           // bound checking
+
+    auto f = sv3.find("literals") ;
+    if(f != std::string::npos) {
+        std::cout << "Found at index:" << f << std::endl ;
+    }
+
+    sv3.remove_prefix(3) ;
+    std::cout << sv3 << std::endl ;
+
+    sv3.remove_suffix(2) ;
+    std::cout << sv3 << std::endl ;
+
+    auto sv4 = sv1.substr(0, 5) ;
+    std::cout << sv4 << std::endl; 
+}
+
+#+END_SRC
+
+#+RESULTS:
+: Size:14
+: Using literals
+: data() Using
+: U
+: U
+: Found at index:6
+: ng literals
+: ng litera
+: Hello
+
+
+** std::string_view - II
+
+*When to use std::string_view*
+- Don't pass in functions that accept a C-style string because it might not have a null terminator
+- Do not return sting view to string from a function
+- Do not assign temporary strings to string views
+- Avoid as class members
+
+#+LATEX: \captionof{listing}{std::string-view II}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string_view>
+#pragma region Example 1
+void PrettyPrint(std::string_view message, char ch) {   // no construction of std:string object
+    for(int x = 0 ; x < message.length() ; ++x) {       // it works because string is not modified
+        std::cout << ch ;
+    }
+    std::cout <<'\n' ;
+    std::cout << message << '\n' ;
+}
+#pragma endregion
+
+#pragma region Example 2
+enum class Title{MR, MRS, MS};
+std::string & CombineName( std::string &name, std::string_view last, Title s) {
+    switch (s) {
+    case Title::MR:
+        name.insert(0, "Mr.") ;
+        break ;
+    case Title::MRS:
+        name.insert(0, "Mrs.") ;
+        break ;
+    case Title::MS:
+        name.insert(0, "Ms.") ;
+        break ;
+    }
+    return name += last ;
+}
+#pragma endregion
+
+#pragma region Example 3
+class Person {
+    std::string m_Name;
+public:
+    Person(std::string name):m_Name{std::move(name)} {
+                
+    }
+    void Print()const {
+        std::cout << m_Name << std::endl; 
+    }
+};
+
+Person CreatePerson(std::string_view name) {
+    std::string n{name} ;
+    Person p{n} ;
+    return p ;
+}
+void WithClass() {
+    using namespace std::string_literals ;
+    //std::string n{} ;
+    Person p{"Umar"} ;
+        
+    p.Print() ;
+}
+#pragma endregion
+
+void BasicUsage() ;
+
+int main() {
+     // PrettyPrint("Hello world", '#') ;
+    WithClass() ;
+}
+
+#+END_SRC
+
+#+RESULTS:
+: Umar
+
+
+** Filesystem - path
+
+*Filesystem*
+- C++17 added support for working with filesystem components
+- Adopted from Boos.Filesystem, it was adjusted to new language
+  standards and made consistent with other parts of the library
+- Provides facilities for performing following operations
+  - manipulaiton of filesystem path
+  - create, move, rename, delete directories
+  - list contents of given directory
+  - get information about path, file permissions, etc.
+- To create, read & write files, you'll still use the stream library class
+- The facilities are provided in /<filesystem>/ header under /std::filesystem/ namespace
+  - *path* - allows manipulation of path that represent existing files or directories
+  - *directory_entry* - represents a path with additional information such as file *size*, file *times*, etc
+  - *directory_iterator* - an iterator that iterates over the contents of a directory
+  - functions for working with directories
+  - and much more
+- Many functions will throw /std::filesystem_error/ exception on failure
+
+#+LATEX: \captionof{listing}{Filesystem - path}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <filesystem>
+
+namespace fs = std::filesystem ;
+
+int main() {
+    fs::path selectedPath{R"(/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.org)"} ;
+    std::cout << selectedPath << std::endl;
+    std::cout << selectedPath.string() << std::endl;
+
+    selectedPath.remove_filename() ;
+    selectedPath /= "newfile" ;
+        
+    if (selectedPath.has_root_name()) {
+        std::cout << "root name\t = " << selectedPath.root_name().string() << std::endl;
+    }
+    if (selectedPath.has_root_path()) {
+        std::cout << "root path\t = " << selectedPath.root_path().string() << std::endl;
+    }
+    if (selectedPath.has_root_directory()) {
+        std::cout << "root directory\t = " << selectedPath.root_directory().string() << std::endl;
+    }
+    if (selectedPath.has_parent_path()) {
+        std::cout << "parent path\t = " << selectedPath.parent_path().string() << std::endl;
+    }
+    if (selectedPath.has_relative_path()) {
+        std::cout << "relative path\t = " << selectedPath.relative_path().string() << std::endl;
+    }
+    if (selectedPath.has_filename()) {
+        std::cout << "filename\t = " << selectedPath.filename().string() << std::endl;
+    }
+    if (selectedPath.has_stem()) {
+        std::cout << "stem part \t = " << selectedPath.stem().string() << std::endl;
+    }
+    if (selectedPath.has_extension()) {
+        std::cout << "extension\t = " << selectedPath.extension().string() << std::endl;
+    }
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: "/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.org"
+: /home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.org
+: root path	 = /
+: root directory	 = /
+: parent path	 = /home/christian/Daten/01-tutorial/Modern-CPP
+: relative path	 = home/christian/Daten/01-tutorial/Modern-CPP/newfile
+: filename	 = newfile
+: stem part 	 = newfile
+
+
+
+** Filesystem - directory_entry
+
+#+LATEX: \captionof{listing}{Filesystem - directory-entry}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <filesystem>
+#include <string_view>
+#include <vector>
+#include <algorithm>
+
+namespace fs = std::filesystem ;
+
+int main() {
+    std::string_view file = "/home/christian/Daten/01-tutorial/Modern-CPP/" ;
+    fs::path currentPath{file} ;
+    fs::directory_iterator begin{currentPath} ;
+    fs::directory_iterator end{} ;
+
+    // While loop with iterators
+    // while(begin != end) {
+    // 	auto de = *begin++ ;
+    // 	std::cout << de.path().filename() << std::endl; 
+    // }
+    // std::cout << std::endl;
+
+    std::vector<fs::directory_entry> dir_entries {};
+    for(const auto & dir_entry : fs::directory_iterator{currentPath}) {
+        dir_entries.push_back(dir_entry) ;
+    }
+    std::partition(dir_entries.begin(), dir_entries.end(), [](const fs::directory_entry & de) {
+        return de.is_directory() ;
+    }) ;
+    for(const auto &dir_entry : dir_entries) {
+        switch(const auto &p = dir_entry.path() ;/*dir_entry.status().type()*/ fs::status(p).type()) {
+        case fs::file_type::directory:
+            std::cout << "[DIR]\t" << p.string() << std::endl; 
+            break ;
+        case fs::file_type::regular:
+            std::cout << "\t\t" << p.string() << '\t' << dir_entry.file_size() << std::endl; 
+            break ;
+        }
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/ 
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/chapters
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/_minted
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/projects
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/fig
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/ .
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/resources
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/uic-gw-evolution
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.org	4569
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.tex	368328
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.org~	4509
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.pdf	993395
+#+end_example
+
+
+** Filesystem - Directory Functions
+
+#+LATEX: \captionof{listing}{Filesystem - Directory Functions Create/Remove}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <filesystem>
+#include <string_view>
+#include <vector>
+#include <algorithm>
+
+namespace fs = std::filesystem ;
+
+void TraversingDirectory(std::string_view file) {
+    fs::path currentPath{file} ;
+    fs::directory_iterator begin{currentPath} ;
+    fs::directory_iterator end{} ;
+
+    std::vector<fs::directory_entry> dir_entries {};
+    for(const auto & dir_entry : fs::directory_iterator{currentPath}) {
+        dir_entries.push_back(dir_entry) ;
+    }
+    std::partition(dir_entries.begin(), dir_entries.end(), [](const fs::directory_entry & de) {
+        return de.is_directory() ;
+    }) ;
+    for(const auto &dir_entry : dir_entries) {
+        switch(const auto &p = dir_entry.path() ;/*dir_entry.status().type()*/ fs::status(p).type()) {
+        case fs::file_type::directory:
+            std::cout << "[DIR]\t" << p.string() << std::endl; 
+            break ;
+        case fs::file_type::regular:
+            std::cout << "\t\t" << p.string() << '\t' << dir_entry.file_size() << std::endl; 
+            break ;
+        }
+    }
+}
+
+int main() {
+    
+    std::string_view file = "/home/christian/Daten/01-tutorial/Modern-CPP/" ;
+    fs::path currentPath{file} ;
+    if(!fs::exists(currentPath)) {
+        std::cout << "Path does not exist = >" << currentPath.string() << std::endl ;
+        return 0;
+    }
+
+    currentPath /= "/home/christian/Daten/01-tutorial/Modern-CPP/test-dir/" ;
+    if(!fs::create_directory(currentPath)) {
+	std::cout << "Could not create a directory\n" ;
+    }else {
+	std::cout << "Directory created successfully\n" ;
+    }
+
+    TraversingDirectory(file);
+    if(!fs::remove(currentPath)) {
+	std::cout << "Could not delete the directory\n" ;
+    }else {
+	std::cout << "Directory removed successfully\n" ;
+    }
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Directory created successfully
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/test-dir
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/ 
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/chapters
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/_minted
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/projects
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/fig
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/ .
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/resources
+[DIR]	/home/christian/Daten/01-tutorial/Modern-CPP/uic-gw-evolution
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.org	4569
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.tex	380007
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.org~	4509
+		/home/christian/Daten/01-tutorial/Modern-CPP/modern-cpp.pdf	1016469
+Directory removed successfully
+#+end_example
+
+#+LATEX: \captionof{listing}{Filesystem - Directory Functions Exception Handling Try/Catch}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <filesystem>
+#include <string_view>
+#include <vector>
+#include <algorithm>
+
+namespace fs = std::filesystem ;
+
+int main() {
+    
+    std::string_view file = "/home/christian/Daten/01-tutorial/Modern-CPP/" ;
+    fs::path currentPath{file} ;
+    if(!fs::exists(currentPath)) {
+        std::cout << "Path does not exist = >" << currentPath.string() << std::endl ;
+        return 0;
+    }
+
+    currentPath /= "/home/christian/Daten/01-tutorial/Modern-CPP/test-dir/" ;
+    // currentPath /= "/home/christian/Daten/01-tutorial/Modern-CPP/projects/" ;
+    try {
+        std::cout << fs::current_path() << std::endl;
+        std::cout << "Changing path\n";
+	fs::current_path(currentPath);                    // throws exception
+        std::cout << fs::current_path() << std::endl;
+    }
+    catch (std::exception& ex) {
+        std::cout << "Exception:" << ex.what() << std::endl ;
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: "/home/christian/Daten/01-tutorial/Modern-CPP/chapters"
+: Changing path
+: "/home/christian/Daten/01-tutorial/Modern-CPP/projects"
+
+#+LATEX: \captionof{listing}{Filesystem - Directory Functions Exception Error Code Class}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <filesystem>
+#include <string_view>
+#include <vector>
+#include <algorithm>
+
+namespace fs = std::filesystem ;
+
+int main() {
+    
+    std::string_view file = "/home/christian/Daten/01-tutorial/Modern-CPP/" ;
+    fs::path currentPath{file} ;
+    if(!fs::exists(currentPath)) {
+        std::cout << "Path does not exist = >" << currentPath.string() << std::endl ;
+        return 0;
+    }
+
+    currentPath /= "/home/christian/Daten/01-tutorial/Modern-CPP/test-dir/" ;
+    std::cout << fs::current_path() << std::endl;
+    std::cout << "Changing path\n";
+
+    std::error_code ec{} ;                          // uses error code class
+    fs::current_path(currentPath, ec);              // call curent path with error code object
+    if(ec) {
+	std::cout << "Error:" << ec.message() << std::endl;
+	return 0;
+    } else {
+	std::cout << fs::current_path() << std::endl;
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: "/home/christian/Daten/01-tutorial/Modern-CPP/chapters"
+: Changing path
+: Error:No such file or directory
+
+
+
+
+** Filesystem - Permissions
+
+#+LATEX: \captionof{listing}{Filesystem - Permissions}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <filesystem>
+#include <string_view>
+
+namespace fs = std::filesystem ;
+
+// demo_perms() from cpprefence
+void demo_perms(fs::perms p)
+{
+    std::cout << ((p & fs::perms::owner_read) != fs::perms::none ? "r" : "-")
+              << ((p & fs::perms::owner_write) != fs::perms::none ? "w" : "-")
+              << ((p & fs::perms::owner_exec) != fs::perms::none ? "x" : "-")
+              << ((p & fs::perms::group_read) != fs::perms::none ? "r" : "-")
+              << ((p & fs::perms::group_write) != fs::perms::none ? "w" : "-")
+              << ((p & fs::perms::group_exec) != fs::perms::none ? "x" : "-")
+              << ((p & fs::perms::others_read) != fs::perms::none ? "r" : "-")
+              << ((p & fs::perms::others_write) != fs::perms::none ? "w" : "-")
+              << ((p & fs::perms::others_exec) != fs::perms::none ? "x" : "-")
+              << '\n';
+}
+
+int main() {
+    std::string_view file = "/home/christian/Daten/01-tutorial/Modern-CPP/projects/section-02/func2/math/inc/math.hpp" ;
+    fs::path file_to_modify{file} ;
+    if(!fs::exists(file_to_modify)) {
+        std::cout << "Path does not exist = >" << file_to_modify.string() << std::endl ;
+         return 0;
+    }
+    auto perm = fs::status(file_to_modify).permissions() ;
+    demo_perms(perm) ;
+    std::cout << "Changing permissions\n" ;
+    fs::permissions(file_to_modify,fs::perms::owner_exec, fs::perm_options::add) ;
+    perm = fs::status(file_to_modify).permissions() ;
+    demo_perms(perm) ;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: rwxr--r--
+: Changing permissions
+: rwxr--r--
+
+
+** Parallel Algorithm - I
+
+- May STL algorithms by default execute serially
+- C++17 provides overloads to these algorithms that can now execute parallelly
+- Algorithms that can be parallelized accept a new template parameter called *execution policy*
+  - used to disambiguete the calls to overloads of the algorithm
+- This can be used to inform the algorithm if it should execute *serially* or *parallelly*
+- The internal implementation details are hidden to the user
+
+
+*Syntax*
+- Parallel versions of STL algorithms have a simple interface
+- They are providedas overloaded funcitons with the first parameter signifying the execution policy
+- Execution policy defines how the algorithm should execute
+
+  /std::algorithm(execution_policy, / * begin, end, other args * / );/
+
+*Execution Policies*
+- All execution policies existing in /<execution>/ header and in /std::execution/ namespace
+- Each of the policy is an individual type
+- /sequend_policy/ - *seq*
+  - the algorithm's execution will not be parallelized and will
+    perform operations sequentially element by element
+  - same as invoking the algorithm from C++14
+- /parallel_policy/ - *par*
+  - indicates the algorithm should execute parallelly
+  - might use thread from a thread pool for execution along with the calling thread
+- /parallel_unsiquenced_policy/ - *par_unseq*
+  - indicates the execution may be parllelized, vectorized or migrated
+    across threads
+
+*** Parallel Algorithm - II
+
+#+LATEX: \captionof{listing}{Parallel Algorithm - Sort}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <chrono>
+#include <iostream>
+#include <random>
+#include <string_view>
+#include <vector>
+#include <execution>
+#include <iomanip>
+
+class Timer {
+    std::chrono::steady_clock::time_point m_start ;
+public:
+    Timer():m_start{std::chrono::steady_clock::now()} {
+                
+    }
+    void ShowResult(std::string_view message = "") {
+        auto end = std::chrono::steady_clock::now() ;
+        auto difference = end - m_start ;
+        std::cout << message
+                  << ':'
+		  << std::setw(6)
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(difference).count()
+                  << '\n' ;
+    }
+};
+
+constexpr unsigned VEC_SIZE{10000000} ;
+
+std::vector<long> CreateVector() {
+    std::vector<long> vec ;
+    vec.reserve(VEC_SIZE) ;
+    std::default_random_engine engine{std::random_device{}()} ;
+    std::uniform_int_distribution<long> dist{0, VEC_SIZE} ;
+    for(unsigned i = 0 ; i < VEC_SIZE ; ++i) {
+        vec.push_back(dist(engine)) ;
+    }
+    return vec ;
+}
+
+int main() {
+    auto dataset = CreateVector() ;
+    Timer t1 ;
+    std::sort(dataset.begin(), dataset.end()) ;
+    t1.ShowResult("Accumulate time t1: ") ;
+
+    Timer t2 ;
+    std::sort(std::execution::par, dataset.begin(), dataset.end()) ;
+    t2.ShowResult("Accumulate time t2: ") ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Accumulate time t1: :  1797
+: Accumulate time t2: :  1054
+
+#+LATEX: \captionof{listing}{Parallel Algorithm - Accumulate / Reduce}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <chrono>
+#include <iostream>
+#include <random>
+#include <string_view>
+#include <vector>
+#include <execution>
+#include <iomanip>
+
+class Timer {
+    std::chrono::steady_clock::time_point m_start ;
+public:
+    Timer():m_start{std::chrono::steady_clock::now()} {
+                
+    }
+    void ShowResult(std::string_view message = "") {
+        auto end = std::chrono::steady_clock::now() ;
+        auto difference = end - m_start ;
+        std::cout << message
+                  << ':'
+		  << std::setw(6)
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(difference).count()
+                  << '\n' ;
+    }
+};
+
+constexpr unsigned VEC_SIZE{100000000} ;
+
+std::vector<long> CreateVector() {
+    std::vector<long> vec ;
+    vec.reserve(VEC_SIZE) ;
+    std::default_random_engine engine{std::random_device{}()} ;
+    std::uniform_int_distribution<long> dist{0, VEC_SIZE} ;
+    for(unsigned i = 0 ; i < VEC_SIZE ; ++i) {
+        vec.push_back(dist(engine)) ;
+    }
+    return vec ;
+}
+
+int main() {
+    auto dataset = CreateVector() ;
+    Timer t1 ;
+    auto result1 = std::accumulate(dataset.begin(), dataset.end(),0L) ;
+    t1.ShowResult("Accumulate time t1: ") ;
+
+    Timer t2 ;
+    auto result2 = std::reduce(dataset.begin(), dataset.end(),0L) ;
+    t2.ShowResult("Accumulate time t2: ") ;
+    (void)result1; (void)result2;
+}
+#+END_SRC
+
+#+RESULTS:
+: Accumulate time t1: :   165
+: Reduce time t2: :   168
+
+
+- Accumulate :: Performs left fold on the container
+- Reduce :: Tree approach 
+
+
+*** Parallel Algorithm - III
+
+#+LATEX: \captionof{listing}{Parallel Algorithm III}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <chrono>
+#include <iostream>
+#include <random>
+#include <string_view>
+#include <vector>
+#include <execution>
+#include <iomanip>
+
+class Timer {
+    std::chrono::steady_clock::time_point m_start ;
+public:
+    Timer():m_start{std::chrono::steady_clock::now()} {
+                
+    }
+    void ShowResult(std::string_view message = "") {
+        auto end = std::chrono::steady_clock::now() ;
+        auto difference = end - m_start ;
+        std::cout << message
+                  << ':'
+		  << std::setw(6)
+                  << std::chrono::duration_cast<std::chrono::nanoseconds>(difference).count()
+                  << '\n' ;
+    }
+};
+
+constexpr unsigned VEC_SIZE{100} ;
+
+std::vector<long> CreateVector() {
+    std::vector<long> vec ;
+    vec.reserve(VEC_SIZE) ;
+    std::default_random_engine engine{std::random_device{}()} ;
+    std::uniform_int_distribution<long> dist{0, VEC_SIZE} ;
+    for(unsigned i = 0 ; i < VEC_SIZE ; ++i) {
+        vec.push_back(dist(engine)) ;
+    }
+    return vec ;
+}
+
+int main() {
+    auto dataset = CreateVector() ;
+    Timer t1 ;
+    std::sort(dataset.begin(), dataset.end()) ;
+    t1.ShowResult("Accumulate time t1: ") ;
+
+    Timer t2 ;
+    std::sort(std::execution::par, dataset.begin(), dataset.end()) ;
+    t2.ShowResult("Accumulate time t2: ") ;
+}
+#+END_SRC
+
+#+RESULTS:
+: Accumulate time t1: :  8056
+: Accumulate time t2: :  4424
+
+
+*Exception Handling*
+- If an element access function throws an exception which is not
+  handled, all parallel algorithm call /std::teminate/
+- This also applies if sequential execution policy is chosen
+- If you want to handle exceptions, use the *standard* algorithms instead
+- Parallel algorithms themselves may throw /std::bad_alloc/ if they fail
+  to acquire memory during execution
+
+*Parallel Algorithms Everywhere?*
+- Backward compatability
+- Can use both input & output iterators
+- Synchronization is expensive
+- Parallelized algorithms teminate on exceptons, sequenced do not
+- Do not give good performance for operations on small number of
+  elements due to *overhead*
+- 

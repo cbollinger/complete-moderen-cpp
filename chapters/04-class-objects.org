@@ -1,0 +1,1493 @@
+* Classes & Objects
+
+** Object Oriented Programming Basics
+- Uses objects as fundamental building blocks, rahter algorithms
+- Program is created as a collection of objects
+- Every object is an instance of some class
+- Classes are united via inheritance relationship
+- Simulate interactions of objects in real-world systems
+- Allows representation of objects in problem domain as software objects
+- Decreases complexity of software systems
+- Make code reusable, extensible and maintanable
+
+*** Object Model
+- Basic principles that help us write OO programs
+  - Abstraction
+  - Encapsulation
+  - Inheritance
+  - Polymorphism
+
+*** Abstraction (OOSC: Modularity/Decomposability)
+- Abstraction focuses on important & necessary details
+- Unwanted features are left out
+- e.g. name of a person without other details (age, weight, etc)
+- Helps focus on important charachteristics
+- Used to represent real-life objects in software, but without the association complexity
+- Represented through a *class, *struct*, *interface*, *union* or *enum*
+ 
+*** Encapsulation (OOSC: Information Hiding)
+- Next step after abstraction
+- Hides the implementation details of a class
+- The class provides behaviour without revealing the implementation
+- Objects of such classes are easy to use
+- The internal implementation can be changed without the users knowlege
+- implementation through access modifiers in OO langunage
+
+- *Encapsulation* is the mechanism of bundling data and methods into
+  a single unit (like a class).
+
+- *Information hiding* is the design goal of concealing the internal
+  implementation details of an object so that clients can only
+  interact with it through a controlled interfac
+  
+*** Inheritance
+- Represnts a hirachy of classes
+- The classes are relatate through *"is-" relationship*
+- The relation is due to same behaviour of classes
+- *e.g. a dog is an animal*
+- The behaviour % its implementation is inherited by the children from
+  the parent
+- The child classes may then reuse the behaviour with the same
+  implementation or provide a different implementation
+- Promotes reuse & extensibility
+
+*** Composition
+- Signifies relationship between objects
+- Represented as *"has-a or "part-of" relationship*
+- Promotes reuse of objects
+- *e.g. car has en engine* 
+
+*** Polymorphism
+- Means different forms
+- Represents common behaviour with different implementations
+- Response will be different for each object, either based on its
+  class or the arguments
+- e.g. car, cycle, person, etc. can move differently
+- Implemented through function overloading, templates & virtual functions
+- Used in conjunction with inheritance & composition
+- Promotes reuse, scalability & extensibility
+
+
+** Class
+- Blueprint/template/recipe
+- Represents an abstraction
+- Every object is instantiated
+- Instance of a class is an object
+- Can have multiple instances
+- Objects are independent
+
+#+ATTR_LATEX: :options {Syntax}
+#+BEGIN_syntaxbox
+/class <name> {/
+///Members are private by default/
+
+/<modifiers>:/
+     /<member variables>/
+     /<member functions>/
+
+/};/
+#+END_syntaxbox
+
+#+LATEX: \captionof{listing}{Sequence Diagram with Relevant Errors}
+#+BEGIN_SRC plantuml :file projects/section-04/class/diagram/car-hirachie.png :mkdirp yes :exports results :cache yes :eval never-export
+@startuml
+car.h --|> driver.h
+driver.h --|> main.cpp
+car.h --|> road.h
+road.h --|> main.cpp
+@enduml
+#+END_SRC
+
+Class diagram: projects/section-04/class/diagram/car-hirachie.png
+
+#+LATEX: \captionof{listing}{Car Class Declaration car1}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car1/inc/car.h :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+class Car {
+
+private:
+    float fuel;
+    float speed;
+    int passengers;
+
+public:
+    void FillFuel(float amount);
+    void Accelerate();
+    void Brake();
+    void AddPassengers(int count);
+    void Dashbord();
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Car Class Definition car1}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car1/src/car.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "car.h"
+#include "iostream"
+
+void Car::FillFuel(float amount) {
+    fuel = amount;
+}
+
+void Car::Accelerate() {
+    speed++;
+    fuel -= 0.5f;
+}
+
+void Car::Brake() {
+    speed = 0;
+}
+
+void Car::AddPassengers(int count) {
+    passengers = count;
+}
+
+void Car::Dashbord() {
+
+    std::cout << "Fuel: " << fuel << std::endl;
+    std::cout << "Speed: " << speed << std::endl;
+    std::cout << "Passengers: " << passengers << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - car1 Client of Car Class }
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car1/src/main.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "car.h"
+
+int main() {
+
+    Car car;
+    car.FillFuel(6);
+
+    for (int i=0; i<6; i++)
+    car.Accelerate();
+
+    car.Dashbord();
+    
+    return 0;
+    
+}
+
+#+END_SRC
+
+
+#+LATEX: \captionof{listing}{Makefile car1}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-04/class/car1/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run car1}
+#+BEGIN_SRC shell :dir projects/section-04/class/car1/ :exports both :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -Iinc src/main.cpp src/car.cpp -o app
+: ./app
+: Fuel: 3
+: Speed: 6
+: Passengers: 998156647
+
+
+#+ATTR_LATEX: :options {Uninitalized Variables}
+#+BEGIN_infobox
+Passengers shows an unpredictable value because it was not initialized.
+#+END_infobox
+
+
+
+** Constructor & Destructor
+- Invoked automatically during instantiation
+- Used for initialization
+- Doe's not have any return type
+- Can be overloaded
+  - Default
+  - Paramterized
+  - Copy
+  - Delegation
+  - Inheriting
+
+*** Default Constructor
+- Constructor with no arguments
+  - /Car c;/ invokes default constructor
+- Automatically sythsized by the compiler
+  - if no other user-defined constructor exist
+
+*** Parameterized Constructor
+- Constructor that accepts one or more arguments
+- Used to initialize the object with user-defined values
+- Never synthsized by the compiler
+- Blocks auto generation of default constructor
+- 
+
+*** Destructor
+- Function that is invoked automatically when an object is destroyed
+- Used for releasing resources that may have been allocated in the constructor
+- Cannot be overloaded
+- No arguments
+- Compiler will sythesize one
+
+*** Example 
+#+LATEX: \captionof{listing}{Car Class Declaration car2}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car2/inc/car.h :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+class Car {
+
+private:
+    float fuel;
+    float speed;
+    int passengers;
+
+public:
+    Car();       // default constructor
+    Car(float);  // Paramterized constructor
+    ~Car();      // destructor
+    void FillFuel(float amount);
+    void Accelerate();
+    void Brake();
+    void AddPassengers(int count);
+    void Dashbord();
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Car Class Definition car2 }
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car2/src/car.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "car.h"
+#include "iostream"
+
+// default constructor
+Car::Car() {
+    fuel = 0;
+    speed = 0;
+    passengers = 0;
+
+    std::cout << "Car()" << std::endl;
+}
+
+// Parameterized constructor
+Car::Car(float amount) {
+    fuel = amount;
+    speed = 0;
+    passengers = 0;
+
+    std::cout << "Car(" << amount << ")" << std::endl;
+}
+
+// destructor
+Car::~Car() {
+    std::cout << "~Car()" << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Car Class Definition car2 }
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car2/src/car.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+void Car::FillFuel(float amount) {
+    fuel = amount;
+}
+
+void Car::Accelerate() {
+    speed++;
+    fuel -= 0.5f;
+}
+
+void Car::Brake() {
+    speed = 0;
+}
+
+void Car::AddPassengers(int count) {
+    passengers = count;
+}
+
+void Car::Dashbord() {
+
+    std::cout << "Fuel: " << fuel << std::endl;
+    std::cout << "Speed: " << speed << std::endl;
+    std::cout << "Passenger: " << passengers << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - car2 Client of Car Class}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car2/src/main.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "car.h"
+
+int main() {
+
+    Car c;
+    c.FillFuel(6);
+
+    Car b(5);
+
+    for (int i=0; i<6; i++) {
+        c.Accelerate();
+        b.Accelerate();
+    }
+
+    c.Dashbord();
+    b.Dashbord();
+    
+    return 0;
+    
+}
+#+END_SRC
+
+
+#+LATEX: \captionof{listing}{Makefile car2}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-04/class/car2/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run car2}
+#+BEGIN_SRC shell :dir projects/section-04/class/car2/ :exports both :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -Iinc src/main.cpp src/car.cpp -o app
+./app
+Car()
+Car(5)
+Fuel: 3
+Speed: 6
+Passenger: 0
+Fuel: 2
+Speed: 6
+Passenger: 0
+~Car()
+~Car()
+#+end_example
+
+
+
+
+** Structure
+
+- Create user-defined type through keyword /struct/
+- Similar to a class
+- Default acces is /public/
+- Frequently used
+  - to repesent simple abstract types such as point, vector3D, etc.
+  - for implementing *function Objects*, used as *callbacs"k in std
+    template library
+
+#+LATEX: \captionof{listing}{Struct Point}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+struct Point {
+    int x;
+    int y;
+};
+
+void DrawLine(Point start, Point end) {
+
+    using namespace std;
+
+    cout << __func__ <<"()"<< endl;
+    cout << " - Start Point:" << " X=" << start.x << " Y=" << start.x << endl;
+    cout << " - End Point:  " << " X=" << end.x   << " Y=" << end.x << endl;
+}
+
+int main() {
+
+    Point start;
+    start.x = 2;
+    start.y = 3;
+
+    Point end;
+    end.x = 2;
+    end.y = 3;
+
+    DrawLine(start, end);
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: DrawLine()
+:  - Start Point: X=2 Y=2
+:  - End Point:   X=2 Y=2
+
+
+
+** Non-Static Data Member initializers (C++11)
+- Convenient way of initializing class members with values during declaration
+
+#+ATTR_LATEX: :options {Syntax}
+#+BEGIN_syntaxbox
+/class <name> {/
+///Members are private by default/
+
+     /<type1> <var1> {<initializer>};/
+     /<type2> <var2> {<initializer>};/
+
+/};/
+#+END_syntaxbox
+
+- Ensures the members are initialized with valid values
+- Can be used to initialize any type
+- Compiler automatically generates initialization code
+- keyword auto is not allowed
+
+#+LATEX: \captionof{listing}{Car Class Declaration car3}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car3/inc/car.h :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+class Car {
+
+private:
+    float fuel     {0}; // non-static data member initialization
+    float speed    {0}; // non-static data member initialization
+    int passengers {0}; // non-static data member initialization
+
+public:
+    Car();       // default constructor
+    Car(float);  // Paramterized constructor
+    ~Car();      // destructor
+    void FillFuel(float amount);
+    void Accelerate();
+    void Brake();
+    void AddPassengers(int count);
+    void Dashbord();
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Car Class Definition car3 - Constructor}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car3/src/car.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "car.h"
+#include "iostream"
+
+// default constructor
+Car::Car() {
+
+    std::cout << "Car()" << std::endl;
+}
+
+// Parameterized constructor
+Car::Car(float amount) {
+    fuel = amount;
+    
+    std::cout << "Car(" << amount << ")" << std::endl;
+}
+
+// destructor
+Car::~Car() {
+    std::cout << "~Car()" << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Car Class Definition car3 - Services}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car3/src/car.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+void Car::FillFuel(float amount) {
+    fuel = amount;
+}
+
+void Car::Accelerate() {
+    speed++;
+    fuel -= 0.5f;
+}
+
+void Car::Brake() {
+    speed = 0;
+}
+
+void Car::AddPassengers(int count) {
+    passengers = count;
+}
+
+void Car::Dashbord() {
+
+    std::cout << "Fuel: " << fuel << std::endl;
+    std::cout << "Speed: " << speed << std::endl;
+    std::cout << "Passenger: " << passengers << std::endl;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - car3 Client of Car Class}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car3/src/main.cpp :main no :padline no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "car.h"
+#include <iostream>
+
+int main() {
+    using namespace std;
+
+    cout << "car c" << endl;
+    Car c;
+    c.Dashbord();
+
+    cout << "\ncar b" << endl;
+    Car b(5);
+    b.Dashbord();
+    
+    return 0;
+    
+}
+
+#+END_SRC
+
+
+#+LATEX: \captionof{listing}{Makefile car3}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-04/class/car3/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run car3}
+#+BEGIN_SRC shell :dir projects/section-04/class/car3/ :exports both :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -Iinc src/main.cpp src/car.cpp -o app
+./app
+car c
+Car()
+Fuel: 0
+Speed: 0
+Passenger: 0
+
+car b
+Car(5)
+Fuel: 5
+Speed: 0
+Passenger: 0
+~Car()
+~Car()
+#+end_example
+
+
+
+** this Poiner
+- A hidden pointer passed to member function
+- *Points to the object that invoked the member function*
+- Provided as a keyword that is meaningful only in member functions
+- Can be used to access members inside the member functions
+
+#+LATEX: \captionof{listing}{Car Class Declaration car4}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car4/inc/car.h :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+class Car {
+
+private:
+    float fuel     {0}; // non-static data member initialization
+    float speed    {0}; // non-static data member initialization
+    int passengers {0}; // non-static data member initialization
+
+public:
+    Car();       // default constructor
+    Car(float);  // Paramterized constructor
+    ~Car();      // destructor
+    void FillFuel(float amount);
+    void Accelerate();
+    void Brake();
+    void AddPassengers(int count);
+    void Dashbord();
+};
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Examples of this pointer usage}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car4/src/car.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+    #include "car.h"
+    #include "iostream"
+
+    // default constructor
+    Car::Car() { std::cout << "Car()" << std::endl; }
+    // Parameterized constructor
+    Car::Car(float amount) {
+        fuel = amount;
+        std::cout << "Car(" << amount << ")" << std::endl;
+    }
+    // destructor
+    Car::~Car() { std::cout << "~Car()" << std::endl;}
+  void Car::FillFuel(float amount) {fuel = amount;}
+
+    void Car::Accelerate() {
+        this->speed++;            // member acces with this pointer
+        this->fuel -= 0.5f;       // member acces with this pointer
+    }
+
+    void Car::Brake() { speed = 0;}
+
+    void Foo(const Car &car) {}
+
+  // help the compiler to distinguishes local and member variables
+  // invoke Foo() function from a member function
+  // invoke Foo() function and pass Car object as an argument
+  // derefence this pointer give back an object
+    void Car::AddPassengers(int passengers) {
+        this->passengers = passengers;    
+        Foo(*this);                       
+    }
+
+    void Car::Dashbord() {
+        std::cout << "Fuel: " << fuel << std::endl;
+        std::cout << "Speed: " << speed << std::endl;
+        std::cout << "Passenger: " << passengers << std::endl;
+    }
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - car4 Client of Car Class}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car4/src/main.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "car.h"
+#include <iostream>
+
+int main() {
+    using namespace std;
+
+    cout << "car c" << endl;
+    Car c;
+    c.Dashbord();
+
+    cout << "\ncar b" << endl;
+    Car b(5);
+    b.Dashbord();
+    
+    return 0;
+    
+}
+
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Makefile car4}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-04/class/car4/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run car4}
+#+BEGIN_SRC shell :dir projects/section-04/class/car4/ :exports both :results output
+make run
+#+END_SRC
+
+
+
+** Static Class Members
+
+#+LATEX: \captionof{listing}{Car Class Declaration car5}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car5/inc/car.h :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+  class Car {
+
+  private:
+      float fuel     {0}; // non-static data member initialization
+      float speed    {0}; // non-static data member initialization
+      int passengers {0}; // non-static data member initialization
+
+      static int count;   // static member function
+
+  public:
+      Car();       // default constructor
+      Car(float);  // Paramterized constructor
+      ~Car();      // destructor
+      void FillFuel(float amount);
+      void Accelerate();
+      void Brake();
+      void AddPassengers(int count);
+      void Dashbord();
+
+      static void ShowCount();
+  };
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Examples of Static Class Members}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car5/src/car.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include "car.h"
+  #include "iostream"
+
+  // initialization of static member variables
+  int Car::count = 0;
+
+  // default constructor
+  Car::Car() {
+
+      ++count;  //increment static member variable
+      std::cout << "Car()" << std::endl;
+  }
+  // Parameterized constructor
+  Car::Car(float amount) {
+      ++count;              //increment static member variable
+      fuel = amount;  
+      std::cout << "Car(" << amount << ")" << std::endl;
+  }
+  // destructor
+  Car::~Car() {
+      --count;              //decrement static member variable
+      std::cout << "~Car()" << std::endl;
+  }
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Examples of Static Class Members}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car5/src/car.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  void Car::FillFuel(float amount) {
+      fuel = amount;
+  }
+  void Car::Accelerate() {
+      this->speed++;            // member acces with this pointer
+      this->fuel -= 0.5f;       // member acces with this pointer
+  }
+  void Car::Brake() {
+      speed = 0;
+  }
+  void Foo(const Car &car) {
+
+  }
+  // help the compiler to distinguishes local and member variables
+  // invoke Foo() function from a member function
+  // invoke Foo() function and pass Car object as an argument
+  // derefence this pointer give back an object
+  void Car::AddPassengers(int passengers) {
+      this->passengers = passengers;    
+      Foo(*this);                       
+  }
+  void Car::Dashbord() {
+      std::cout << "Fuel: " << fuel << std::endl;
+      std::cout << "Speed: " << speed << std::endl;
+      std::cout << "Passenger: " << passengers << std::endl;
+  }
+  void Car::ShowCount() {
+      std::cout << "Number of Cars: " << count << std::endl;
+  }
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - car5 Client of Car Class}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car5/src/main.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include "car.h"
+  #include <iostream>
+
+  int main() {
+      using namespace std;
+
+      Car::ShowCount();
+
+      Car car(4);
+      // car.FillFuel(6);
+      for(int i=0; i<4; i++) {
+    car.Accelerate();
+      }
+
+      car.Dashbord();
+
+      Car c1, c2;
+
+      Car::ShowCount();
+      
+      return 0;    
+  }
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Makefile car5}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-04/class/car5/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run car5}
+#+BEGIN_SRC shell :dir projects/section-04/class/car5/ :exports both :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+./app
+Number of Cars: 0
+Car(4)
+Fuel: 2
+Speed: 4
+Passenger: 0
+Car()
+Car()
+Number of Cars: 3
+~Car()
+~Car()
+~Car()
+#+end_example
+
+
+*** Constant Member Functions
+- Member functions qualified with const keyword
+- Both declaration and definition is qualified
+- Such functions *cannot change value* of any member variables
+- Usful for creating *read-only* functions
+- Constant objects can invoke only constant member functions
+
+#+LATEX: \captionof{listing}{Car Class Declaration car6}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car6/inc/car.h :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+  class Car {
+
+  private:
+      float fuel     {0}; // non-static data member initialization
+      float speed    {0}; // non-static data member initialization
+      int passengers {0}; // non-static data member initialization
+
+      static int count;   // static member function
+
+  public:
+      Car();       // default constructor
+      Car(float);  // Paramterized constructor
+      ~Car();      // destructor
+      void FillFuel(float amount);
+      void Accelerate();
+      void Brake();
+      void AddPassengers(int count);
+
+      void Dashbord () const;
+      static void ShowCount ();
+  };
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Examples of Constant Member Functions}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car6/src/car.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include "car.h"
+  #include "iostream"
+
+
+  // initialization of static member variables
+  int Car::count = 0;
+
+  // default constructor
+  Car::Car() {
+      ++count;  //increment static member variable
+      std::cout << "Car()" << std::endl;
+  }
+
+  // Parameterized constructor
+  Car::Car(float amount) {
+      ++count;              //increment static member variable
+      fuel = amount;  
+      std::cout << "Car(" << amount << ")" << std::endl;
+  }
+
+  // destructor
+  Car::~Car() {
+      --count;              //decrement static member variable
+      std::cout << "~Car()" << std::endl;
+  }
+  #+END_SRC
+
+#+LATEX: \captionof{listing}{Examples of Constant Member Functions}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car6/src/car.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  void Car::FillFuel(float amount) { fuel = amount;}
+
+  void Car::Accelerate() {
+      this->speed++;            // member acces with this pointer
+      this->fuel -= 0.5f;       // member acces with this pointer
+  }
+
+  void Car::Brake() { speed = 0; }
+
+  void Foo(const Car &car) {}
+  // help the compiler to distinguishes local and member variables
+  // invoke Foo() function from a member function
+  // invoke Foo() function and pass Car object as an argument
+  // derefence this pointer give back an object
+  void Car::AddPassengers(int passengers) {
+      this->passengers = passengers; 
+      Foo(*this);                    
+  }
+
+  void Car::Dashbord() const {
+      std::cout << "Fuel: " << fuel << std::endl;
+      std::cout << "Speed: " << speed << std::endl;
+      std::cout << "Passenger: " << passengers << std::endl;
+      // Not allowed in const member function!
+      // this->fuel++;
+  }
+
+  void Car::ShowCount() {std::cout << "Number of Cars: " << count << std::endl;}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - car6 Client of Car Class}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car6/src/main.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include "car.h"
+  #include <iostream>
+
+  int main() {
+      using namespace std;
+
+      Car::ShowCount();
+
+      Car car(4);
+      car.Dashbord();
+
+      Car c1, c2;
+      Car::ShowCount();
+      
+      return 0;    
+  }
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Makefile car6}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-04/class/car6/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run car6}
+#+BEGIN_SRC shell :dir projects/section-04/class/car6/ :exports both :results output
+ make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+./app
+Number of Cars: 0
+Car(4)
+Fuel: 4
+Speed: 0
+Passenger: 0
+Car()
+Car()
+Number of Cars: 3
+~Car()
+~Car()
+~Car()
+#+end_example
+
+
+*** Copy Constructor - Part I
+
+- Creates copy of the object's state in another object
+- Synthesized automatically
+- Default implementation copies values
+- User-defined implementation required for pointer members
+
+#+LATEX: \captionof{listing}{Integer Class - }
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  class Integer {
+      int *m_pInt;
+
+  public:
+      Integer();
+      Integer(int value);
+      int GetValue() const;
+      void SetValue(int value);
+
+      ~Integer();
+  };
+
+  Integer::Integer() {
+      m_pInt = new int(0);
+  }
+
+  Integer::Integer(int value) {
+      m_pInt = new int(value);
+  }
+
+  Integer::~Integer() {
+      delete m_pInt;
+  }
+
+  int Integer::GetValue() const {
+      return *m_pInt;
+  }
+
+  void Integer::SetValue(int value) {
+      ,*m_pInt = value;
+  }
+
+  using namespace std;
+
+  int main() {
+
+      Integer i(5);
+      Integer i2(i);      // !!!!   risky operation   !!!!
+      cout << i.GetValue() << endl;
+      cout << i2.GetValue() << endl;
+      
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: 5
+: 5
+
+
+*** Copy Constructor - Part II
+
+- Creates copy of the object's state in another object
+- Synthesized automatically
+- Default implementation copies values
+- User-defined implementation required for pointer members
+
+#+LATEX: \captionof{listing}{Integer Class - }
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  //--------------------------------------------------------------------
+  // Class Declaration
+  //--------------------------------------------------------------------
+  class Integer {
+      int *m_pInt;
+
+  public:
+      Integer();
+      Integer(int value);
+      Integer(const Integer& obj);  // Copy Constructor, copy by value
+      int GetValue() const;
+      void SetValue(int value);
+
+      ~Integer();
+  };
+        
+  //--------------------------------------------------------------------
+  // Class Definition
+  //--------------------------------------------------------------------
+  Integer::Integer() {  m_pInt = new int(0);}
+  Integer::Integer(int value) {m_pInt = new int(value);}
+  Integer::~Integer() {delete m_pInt;}
+  //copy constructor - Deep Copy
+  //Reference avoids loop of shallow copy
+  Integer::Integer(const Integer& obj) {m_pInt = new int(*obj.m_pInt);} 
+  int Integer::GetValue() const {return *m_pInt;}
+  void Integer::SetValue(int value) {*m_pInt = value;}
+
+
+  //--------------------------------------------------------------------
+  // Test Program
+  //--------------------------------------------------------------------
+  using namespace std;
+
+  int main() {
+
+      int *p1 = new int(5);
+      // Shallow Copy - Copies only the pointer address
+      int *p2 = p1;
+      // Deep Copy - Copies the value at the address of the pointer
+      int *p3 = new int(*p1);
+
+      // mark the pointers as used!
+      (void)p1;
+      (void)p2;
+      (void)p3;
+
+      Integer i  {5};
+      Integer i2 {i};      // call copy constructor
+      cout << i.GetValue() << endl;
+      cout << i2.GetValue() << endl;
+                
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: 5
+: 5
+
+
+#+ATTR_LATEX: :options {Rule Of 3}
+#+BEGIN_infobox
+- All should be defined if a user implements any of them
+  - Destructor
+  - Copy Constructor
+  - Copy assignment operator
+
+- This will be due to allocation of some resources in a constructor
+  - Destructor will free the resource
+  - Copy constructor will perform a *deep copy*
+  - Copy assignment operation will also perform a *deep copy*
+
+- Not Implementing user defined operations can lead to memory leak or shallow copy!
+#+END_infobox
+
+
+*** Delegation Constructors (C++11)
+
+- Allows a constructor to invoke another constructor
+- Replacment for common initialization
+- Reduces duplicate initialization code in multiple constructors
+
+#+ATTR_LATEX: :options {Syntax}
+#+BEGIN_syntaxbox
+/class Class {/
+
+     /Class():Class(val1, val2) {  ///Default Constructor delegates to Parmeterized Constructor/
+     /Class(arg1, arg2) {/          ///Parameterized Constructor
+             ///Initialization code/
+
+/};/
+#+END_syntaxbox
+  
+  
+#+LATEX: \captionof{listing}{Car Class Declaration car7}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car7/inc/car.h :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+  class Car {
+
+  private:
+      float fuel     {0}; // non-static data member initialization
+      float speed    {0}; // non-static data member initialization
+      int passengers {0}; // non-static data member initialization
+
+      static int count;   // static member function
+
+  public:
+      Car();             // default constructor
+      Car(float amunt);  // Paramterized constructor
+      Car(float amount, int passengers);
+      ~Car();      // destructor
+      void FillFuel(float amount);
+      void Accelerate();
+      void Brake();
+      void AddPassengers(int count);
+
+      void Dashbord () const;
+      static void ShowCount ();
+  };
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Examples of Delegation Constructor}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car7/src/car.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include "car.h"
+  #include "iostream"
+
+
+  // initialization of static member variables
+  int Car::count = 0;
+
+  // default constructor
+  Car::Car():Car(0) {
+      std::cout << "Car()" << std::endl;
+  }
+
+  // Parameterized constructor
+  Car::Car(float amount):Car(amount,0) {
+      std::cout << "Car(float), " << amount << std::endl;
+  }
+
+    Car::Car(float amount, int passengers) {
+      ++count;              //increment static member variable
+      fuel = amount;  
+      this->passengers = passengers;
+      std::cout << "Car(float, int), " << amount << ", " << passengers << std::endl;
+  }
+
+  // destructor
+  Car::~Car() {
+      --count;              //decrement static member variable
+      std::cout << "~Car()" << std::endl;
+  }
+
+  #+END_SRC
+
+#+LATEX: \captionof{listing}{Examples of Delegation Constructor}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car7/src/car.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+  void Car::FillFuel(float amount) { fuel = amount;}
+
+  void Car::Accelerate() {
+      this->speed++;            // member acces with this pointer
+      this->fuel -= 0.5f;       // member acces with this pointer
+  }
+
+  void Car::Brake() { speed = 0; }
+
+  void Foo(const Car &car) { (void)car; }
+  // help the compiler to distinguishes local and member variables
+  // invoke Foo() function from a member function
+  // invoke Foo() function and pass Car object as an argument
+  // derefence this pointer give back an object
+  void Car::AddPassengers(int passengers) {
+      this->passengers = passengers; 
+      Foo(*this);                    
+  }
+
+  void Car::Dashbord() const {
+      std::cout << "Fuel: " << fuel << std::endl;
+      std::cout << "Speed: " << speed << std::endl;
+      std::cout << "Passenger: " << passengers << std::endl;
+      // Not allowed in const member function!
+      // this->fuel++;
+  }
+
+  void Car::ShowCount() {std::cout << "Number of Cars: " << count << std::endl;}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP - car7 Client of Car Class}
+#+BEGIN_SRC C++ :tangle projects/section-04/class/car7/src/main.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include "car.h"
+  #include <iostream>
+
+  int main() {
+      using namespace std;
+
+      Car car;
+      
+      return 0;    
+  }
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Makefile car7}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-04/class/car7/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/car.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run car7}
+#+BEGIN_SRC shell :dir projects/section-04/class/car7/ :exports both :results output
+ make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -Iinc src/main.cpp src/car.cpp -o app
+: ./app
+: Car(float, int), 0, 0
+: Car(float), 0
+: Car()
+: ~Car()
+
+
+*** Default & Deleted Functions (C++11)
+#+LATEX: \captionof{listing}{Integer Class - default keyword}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  class Integer {
+      int m_Value {0};
+
+  public:
+      Integer() = default;
+      Integer(int value) {m_Value = value;}
+      Integer(const int&) = default;
+  };
+
+  using namespace std;
+
+  int main() {
+
+      Integer i1;
+      Integer i2(3); 
+      
+      return 0;
+  }
+#+END_SRC
+
+
+#+LATEX: \captionof{listing}{Integer Class - delete keyword}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  class Integer {
+      int m_Value {0};
+
+  public:
+      Integer() = default;
+      Integer(int value) {m_Value = value;}
+      Integer(const int&) = delete;
+      void SetValue(int value) {m_Value = value;}
+      void SetValue(float) = delete;
+  };
+
+  using namespace std;
+
+  int main() {
+
+      Integer i1;
+      // Integer i2(3);             // not possible anymoe 
+      i1.SetValue(100);
+      // i1.SetValue(3.7f);         // not possible anymore
+      
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+
+
+** TODO Constant Member Functions
+
+** TODO Copy Constructor - Part I
+
+** TODO Copy Constructor - Part II
+
+** TODO Delegating Constructors (C++11)
+
+** TODO Default & Deleted Functions (C++11)
+

@@ -1,0 +1,142 @@
+
+#+LATEX: \captionof{listing}{Array and Literals}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <string_view>
+
+using namespace std;
+
+
+int main() {
+
+    cout << "                    sz= " << sizeof(int) << "        Integer" <<  endl;
+    int v[3] { 1,2,3 };
+    for(const auto& f : v)
+	cout << f << ", ";
+    cout << "           sz= " << sizeof(v) << " v[3]: Integer Array" <<  endl;
+
+    // C-String Array - zero terminated ("\0") array of char
+    char c[] {"this is a string"};
+    cout << c << "    sz= " << sizeof(c) << "  c[]: C-String Array" << endl;
+
+    string s {"This is a string"};
+    cout << s << "    sz= " << sizeof(s) << "    s: STL Container std::string" <<  endl;
+
+    const char* c1 = s.c_str();
+    cout << c1 << "    sz= " << sizeof(c1) << "    c1: String literal, initialisation" << endl;
+
+    string_view sv(c1);
+    cout << c1 << "    sz= " << sv.size() << "   c1: string_view size" << endl;
+    cout << &c1 << endl;
+    for(int i = 0; i < 17; ++i) {
+	if (c1[i] == '\0') {
+            std::cout << "\\0"; // Explicitly print text when hitting the zero terminator
+        } else {
+            std::cout << c1[i];
+        }
+    }
+    cout << "           c1: Check for zero-termination in For-Loop" << endl;
+
+    c1 = "Hello World";
+    string_view sv1(c1);
+    cout << c1 << "         sz= " << sv1.size() << "   c1: assignment" << endl;
+    cout << &c1 << endl;
+
+    int zahl = 5;
+    zahl = 6;
+    const int * i; i = &zahl;
+    const int * j = i;
+    cout << *j << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+                    sz= 4        Integer
+1, 2, 3,            sz= 12 v[3]: Integer Array
+this is a string    sz= 17  c[]: C-String Array
+This is a string    sz= 32    s: STL Container std::string
+This is a string    sz= 8    c1: String literal, initialisation
+This is a string    sz= 16   c1: string_view size
+0x7ffce5bc2258
+This is a string\0           c1: Check for zero-termination in For-Loop
+Hello World         sz= 11   c1: assignment
+0x7ffce5bc2258
+6
+#+end_example
+
+
+
+
+#+LATEX: \captionof{listing}{Map}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <map>
+#include <map>
+
+int main() {
+    using namespace std;
+    map<int, string> m{{10, "CPU"}, {15, "GPU1"}, {20," RAM"}, {15," GPU2"}, {15," dummy"}};
+
+    std::cout << "size = " << m.size() <<": " ;
+
+    for(const auto& n : m)
+	std::cout <<"{" << n.first << " = " << n.second << "}, ";
+}
+#+END_SRC
+
+#+RESULTS:
+: size = 3: {10 = CPU}, {15 = GPU1}, {20 =  RAM}, 
+
+
+
+#+LATEX: \captionof{listing}{Chrono Calender dates and time zones}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++20 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <chrono>
+
+using namespace std;
+using namespace std::chrono;
+
+
+int main() {
+
+    // Manually create two dates
+    year_month_day d1{floor<days>(system_clock::now())};
+    year_month_day d2{year{2028}, month{7}, day{31}};
+
+    // Convert to time_points with day precision
+    sys_days tp1{d1};
+    sys_days tp2{d2};
+
+    // Compute the difference
+    days diff = tp2 - tp1;
+
+    cout << "Days:\t\t" << diff.count() << endl;
+
+
+    int workdays = 0;
+
+    for (sys_days d = d1; d < d2; d += days{1})
+    {
+        weekday wd{d};
+
+        if (wd != Saturday && wd != Sunday)
+        {
+            ++workdays;
+        }
+    }
+
+    cout << "Workdays:\t" << workdays << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Days:		741
+: Workdays:	529

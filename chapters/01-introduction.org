@@ -1,0 +1,53 @@
+* Introduction
+
+*Standard* 
+- ISO C++ STD 98
+- ISO C++ STD 2011 second major version of C++
+- ISO C++ STD 2014 minor version
+- ISO C++ STD 2017 major version
+- ISO C++ STD 2020 major version
+- ISO C++ STD 2020 current version
+- ISO C++ STD 2026 The next generation of the C++ standard. 
+
+*Compilers & DEvelopment Environements*
+- *Visual:* Studio IDE for Microsoft Windows
+- *Code:* Blocks open-source cross-platform IDE
+- *MinGW:* a compiler toolchain for Microsoft Windows
+- *Cevelop:* Eclipse CDT extension for
+- *GCC GNU:* Compiler Collection free and opensource
+
+*Source Code*
+
+- [[https://github.com/umarmlone/beg_mod_cpp][Source Code for download on Github]]
+
+- Course Slides: /home/christian/Daten/01-tutorial/ModernesC++/Resources/Modern+C+++-+Distribution.pptx
+
+** Required Software 
+
+You can choose any of the following compilers & Integrated Development
+Environments. In this training, we’ll use Visual Studio 2015/2017/2019
+Community edition. The same programs can be compiled without any
+changes in any *C++11/14/17* compliant compiler on any platform.
+
+*** Windows
+
+- Visual Studio 2015/2017/2019  [[https://www.visualstudio.com/vs/community/]] NOTE: PREFER THE LATEST VERSION OF VISUAL STUDIO
+- Code::Blocks - requires a separate compiler [[https://www.codeblocks.org/]]
+- Cevelop - requires a separate compiler [[https://www.cevelop.com/]]
+- Eclipse CDT - requires a separate compiler (same as Cevelop) [[https://eclipse.org/cdt/downloads.php]]
+- MinGW [[http://mingw.org/]]
+- Visual Studio Code [[https://code.visualstudio.com/]]
+
+*** Linux (Ubuntu, CentOS, etc)
+
+- GNU C++ Compiler (Install from command line e.g. sudo apt-get install g++)
+- Cevelop [[https://www.cevelop.org/]]
+- Eclipse CDT (same as Cevelop) [[https://eclipse.org/cdt/downloads.php]]
+
+*** MacOS
+
+- XCode (Install from Mac Appstore)
+- Cevelop [[https://www.cevelop.com/]]
+- Eclipse CDT (same as Cevelop) [[https://eclipse.org/cdt/downloads.php]]
+
+

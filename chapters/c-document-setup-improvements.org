@@ -1,0 +1,179 @@
+* Document Setup & Build Improvements
+
+This appendix documents all structural and build improvements applied to this
+document. Use it as a checklist when converting other Org-mode LaTeX documents
+to the same standard.
+
+** Build Speed: Latexmk Configuration
+
+The default latexmk runs up to 5 xelatex passes. With many =minted= code blocks
+each pass is slow. Two changes reduce this significantly.
+
+*** Global =~/.latexmkrc=
+
+Managed via =Emacs.org= (=org-babel-tangle=). Limits reruns to 3 and ensures
+=-shell-escape= (required by minted) is always passed:
+
+#+begin_src perl :tangle no
+$xelatex   = 'xelatex   -shell-escape -interaction=nonstopmode %O %S';
+$lualatex  = 'lualatex  -shell-escape -interaction=nonstopmode %O %S';
+$pdflatex  = 'pdflatex  -shell-escape -interaction=nonstopmode %O %S';
+$max_repeat = 3;
+$clean_ext = 'xdv synctex.gz';
+#+end_src
+
+*** Project-local =.latexmkrc=
+
+Placed in the document root directory. Selects xelatex for this project:
+
+#+begin_src perl :tangle no
+# Global settings (shell-escape, max_repeat) come from ~/.latexmkrc
+$pdf_mode = 5;   # 5 = xelatex
+#+end_src
+
+*** Emacs =org-latex-pdf-process=
+
+#+begin_src lisp :tangle no
+(setq org-latex-pdf-process
+  '("latexmk -xelatex -shell-escape -interaction=nonstopmode -halt-on-error %f"))
+#+end_src
+
+Changes vs. the original command:
+- Removed =-pdf= (redundant — =-xelatex= already sets the engine)
+- Removed =-f= (force-on-error causes latexmk to loop through broken states)
+
+** Reducing xelatex Passes: hyperref PageLabels
+
+The combination of =lastpage= + =scrlayer-scrpage= + =hyperref= triggers a
+/"Rerun to get /PageLabels entry"/ warning, adding one unnecessary pass.
+
+Add to the document preamble:
+
+#+begin_src latex :tangle no
+\hypersetup{pdfpagelabels=false}
+#+end_src
+
+Or, to apply globally to all Org exports, add it to =org-latex-hyperref-template=
+in =Emacs.org=:
+
+#+begin_src lisp :tangle no
+(setq org-latex-hyperref-template
+  "\\hypersetup{
+     ...
+     pdfpagelabels=false
+  }")
+#+end_src
+
+** Figure Placement: =[H]= Instead of =[htbp]=
+
+LaTeX's default =[htbp]= lets figures float away from their definition point,
+which disrupts the reading flow in tutorial documents.
+
+The =float= package's =[H]= specifier forces figures exactly where defined.
+
+Add to preamble:
+
+#+begin_src latex :tangle no
+\usepackage{float}    % required for [H] placement specifier
+#+end_src
+
+Replace all =#+ATTR_LATEX= directives:
+
+#+begin_example
+# Before:
+#+ATTR_LATEX: :float nil
+
+# After (both forms):
+
+** Source Code Formatting: Untabify
+
+Tabs in source blocks cause inconsistent indentation in the PDF output.
+Convert all tabs to 4 spaces inside =#+begin_src= / =#+end_src= blocks.
+
+In Emacs, on each chapter file:
+: M-x mark-whole-buffer  →  M-x untabify
+
+Or use the Python snippet (processes all =.org= files in =chapters/=):
+
+#+begin_src python :tangle no
+import glob, re
+
+TAB_WIDTH = 4
+
+def untabify(line):
+    result, col = [], 0
+    for ch in line:
+        if ch == '\t':
+            spaces = TAB_WIDTH - (col % TAB_WIDTH)
+            result.append(' ' * spaces)
+            col += spaces
+        else:
+            result.append(ch)
+            col += 1
+    return ''.join(result)
+
+for path in glob.glob("chapters/*.org"):
+    lines = open(path).readlines()
+    out, in_src = [], False
+    for line in lines:
+        low = line.lower().lstrip()
+        if low.startswith("#+begin_src"): in_src = True
+        elif low.startswith("#+end_src"):  in_src = False
+        out.append(untabify(line) if (in_src and "\t" in line) else line)
+    with open(path, 'w') as f:
+        f.writelines(out)
+#+end_src
+
+** Named Box Environments (bclogo)
+
+Instead of repeating the full =#+ATTR_LATEX= style string before every box,
+define named environments once in the preamble.
+
+*** Preamble Definitions
+
+#+begin_src latex :tangle no
+\newenvironment{infobox}[1]  {\begin{bclogo}[couleur=light-cyan,  arrondi=0.1,logo=\bclampe,   ombre=true]{#1}}{\end{bclogo}}
+\newenvironment{warningbox}[1]{\begin{bclogo}[couleur=dg_yellow!30,arrondi=0.1,logo=\bcattention,ombre=true]{#1}}{\end{bclogo}}
+\newenvironment{syntaxbox}[1] {\begin{bclogo}[couleur=light-gray,  arrondi=0.1,logo=\bcbook,    ombre=true]{#1}}{\end{bclogo}}
+#+end_src
+
+| Environment  | Colour       | Logo            | Use for              |
+|--------------+--------------+-----------------+----------------------|
+| =infobox=    | light-cyan   | lamp (\bclampe) | Notes, tips, remarks |
+| =warningbox= | yellow/orange | warning sign   | Pitfalls, cautions   |
+| =syntaxbox=  | light-gray   | book (\bcbook)  | Syntax definitions   |
+
+*** Usage in Chapters
+
+#+begin_example
+# Before (full style repeated on every box):
+#+ATTR_LATEX: :options [couleur=light-cyan,arrondi=0.1,logo=\bclampe,ombre=true]{Title}
+#+BEGIN_bclogo
+...
+#+END_bclogo
+
+# After (only the title changes):
+#+ATTR_LATEX: :options {Title}
+#+BEGIN_infobox
+...
+#+END_infobox
+#+end_example
+
+*** Box Type Quick Reference
+
+#+begin_example
+#+ATTR_LATEX: :options {Note Title}
+#+BEGIN_infobox
+Content here.
+#+END_infobox
+
+#+ATTR_LATEX: :options {Warning Title}
+#+BEGIN_warningbox
+Content here.
+#+END_warningbox
+
+#+ATTR_LATEX: :options {Syntax Title}
+#+BEGIN_syntaxbox
+Content here.
+#+END_syntaxbox
+#+end_example

@@ -1,0 +1,1013 @@
+
+* C++ Concurrency
+
+** Concurrency Basics
+
+- Large application have multiple components
+- Some components may have to execute concurrently
+- This allows efficient usage of the CPU
+- This can be achievd by creating multiple threads
+- C++11 added support for concurrency
+- Threding library includes utilities for starting and managing threads
+
+#+LATEX: \captionof{listing}{Single Thread Application}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+
+std::list<int> g_Data;
+const int SIZE = 5000000;
+
+void Download() {
+    std::cout << "[Downloader]Started download of file :" << std::endl; 
+    for (int i = 0; i < SIZE; ++i) {
+        g_Data.push_back(i);
+    }
+    std::cout << "[Downloader]Finished download" << std::endl; 
+}
+int main() {
+    std::cout << "[main]User started an operation" << std::endl; 
+    Download();
+    std::cout << "[main]User started another operation" << std::endl;
+        
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [main]User started an operation
+: [Downloader]Started download of file :
+: [Downloader]Finished download
+: [main]User started another operation
+
+
+** std::thread
+
+- Accepts a callable as constructor argument
+- The callable is executed in a seperate thread
+- The constructor does not wait for the thread to start it returns
+  immediately.
+- Resides in <thread> header
+
+
+#+LATEX: \captionof{listing}{Joinable Thread Application}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+#include <thread> 
+
+std::list<int> g_Data;
+const int SIZE = 5000000;
+
+void Download() {
+    std::cout << "[Downloader]Started download of file :" << std::endl; 
+    for (int i = 0; i < SIZE; ++i) {
+        g_Data.push_back(i);
+    }
+    std::cout << "[Downloader]Finished download" << std::endl; 
+}
+int main() {
+    std::cout << "[main]User started an operation" << std::endl;
+    std::thread theDownloader(Download);
+    std::cout << "[main]User started another operation" << std::endl;
+
+    theDownloader.join();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [main]User started an operation
+: [main]User started another operation
+: [Downloader]Started download of file :
+: [Downloader]Finished download
+
+
+#+LATEX: \captionof{listing}{Detached Thread Application}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+#include <thread> 
+
+std::list<int> g_Data;
+const int SIZE = 5000000;
+
+void Download() {
+    std::cout << "[Downloader]Started download of file :" << std::endl; 
+    for (int i = 0; i < SIZE; ++i) {
+        g_Data.push_back(i);
+    }
+    std::cout << "[Downloader]Finished download" << std::endl; 
+}
+int main() {
+    std::cout << "[main]User started an operation" << std::endl;
+    std::thread theDownloader(Download);
+    theDownloader.detach();
+
+    std::cout << "[main]User started another operation" << std::endl;
+
+    //theDownloader.join();
+    // std::cout << "Press Enter...\n";
+    // std::cin.get();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [main]User started an operation
+: [main]User started another operation
+: [Downloader]Started download of file :
+
+
+** std::thread Passing Arguments
+
+
+#+LATEX: \captionof{listing}{Passing Arguments by Value}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+#include <thread>
+#include <string>
+
+using namespace std;
+
+list<int> g_Data;
+const int SIZE = 5000000;
+
+
+void Download(string file) {
+    cout << "[Downloader]Started download of file :" << file << endl; 
+    for (int i = 0; i < SIZE; ++i) {
+        g_Data.push_back(i);
+    }
+    cout << "[Downloader]Finished download" << endl; 
+}
+int main() {
+    string file {"cppcast.mp4"};
+    cout << "[main]User started an operation" << endl; 
+
+    //use ref and cref to pass arguments as reference & const reference, respectively
+    thread thDownloader(Download, file );
+    //thDownloader.detach();
+
+    cout << "[main]User started another operation" << endl;
+
+    //Always check before joining a thread
+    if (thDownloader.joinable()) {
+        thDownloader.join() ;
+    }
+    //system("Pause");
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [main]User started an operation
+: [main]User started another operation
+: [Downloader]Started download of file :cppcast.mp4
+: [Downloader]Finished download
+
+
+#+LATEX: \captionof{listing}{Passing Arguments by Reference}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+#include <thread>
+#include <string>
+std::list<int> g_Data;
+const int SIZE = 5000000;
+class String {
+public:
+    String() {
+        std::cout << "String()" << std::endl;
+    }
+    String(const String &) {
+        std::cout << "String(const String&)" << std::endl;
+    }
+    String & operator=(const String&) {
+        std::cout << "operator=(const String&)" << std::endl;
+
+        return *this;
+    }
+    ~String() {
+        std::cout << "~String()" << std::endl;
+    }
+};
+void Download(const String &file) {
+    (void)file;
+    //std::cout << "[Downloader]Started download of file :" << file << std::endl; 
+    for (int i = 0; i < SIZE; ++i) {
+        g_Data.push_back(i);
+    }
+    std::cout << "[Downloader]Finished download" << std::endl; 
+}
+int main() {
+    String file;
+    std::cout << "[main]User started an operation" << std::endl; 
+    //use std::ref and std::cref to pass arguments as reference & const reference, respectively
+    std::thread thDownloader(Download,std::cref(file) );
+    //thDownloader.detach();
+
+    std::cout << "[main]User started another operation" << std::endl;
+    //Always check before joining a thread
+    if (thDownloader.joinable()) {
+        thDownloader.join() ;
+    }
+    //system("Pause");
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: String()
+: [main]User started an operation
+: [main]User started another operation
+: [Downloader]Finished download
+: ~String()
+
+
+
+
+** std::thread Returning Values 
+
+#+LATEX: \captionof{listing}{packaged-task return value}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <future>
+
+using namespace std;
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+int Square(int x) {
+    return x * x;
+}
+
+int Compute(const vector<int> &data) {
+
+    int sum {};
+    for(auto e : data) {
+        sum += e;
+        this_thread::sleep_for(1s);
+        cout << ".";
+    }
+    return sum;
+}
+
+int main() {
+
+    packaged_task<int(const vector<int> &)> tCompute {Compute};
+    auto fCompute = tCompute.get_future();
+    vector<int> data {1,2,3,4,5};
+    tCompute(data);                        // blocks main function!!!
+    cout << fCompute.get() << endl;
+    cout << "End fo main()" << endl;
+    
+    return  0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 8
+: 25
+: .....15
+: End fo main()
+
+
+
+#+ATTR_LATEX: :options {packaged task}
+#+BEGIN_infobox
+Packaged tasks blocks the main thread
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{packaged-task<> run in seperate thread}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <future>
+
+using namespace std;
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+int Square(int x) {
+    return x * x;
+}
+
+int Compute(const vector<int> &data) {
+
+    int sum {};
+    for(auto e : data) {
+        sum += e;
+        this_thread::sleep_for(1s);
+        cout << ".";
+    }
+    return sum;
+}
+
+int main() {
+
+    packaged_task<int(const vector<int> &)> taskCompute {Compute};
+    auto futureCompute = taskCompute.get_future();
+    vector<int> data {1,2,3,4,5};
+
+    thread threadCompute{ move(taskCompute), data};
+    cout << "Thread has started computing" << endl;
+    cout << futureCompute.get() << endl;               // blocks main
+
+    cout << "End fo main()" << endl;
+    threadCompute.join();                        
+    return  0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Thread has started computing
+: .....15
+: End fo main()
+
+
+** std::thread Synchronization std:mutex 
+
+#+LATEX: \captionof{listing}{Synchronization}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+#include <thread> 
+#include <mutex>
+
+using namespace std;
+
+list<int> g_Data;
+const int SIZE = 10000;
+mutex mux_data;
+
+void Download() {
+    for (int i = 0; i < SIZE; ++i) {
+        mux_data.lock();
+        g_Data.push_back(i);
+        // if(i == 500) {               // generates a deadlock
+        //     return;
+        // }
+        mux_data.unlock();
+    }
+}
+
+void Download2() {
+    for (int i = 0; i < SIZE; ++i) {
+        mux_data.lock();
+        g_Data.push_back(i);
+        mux_data.unlock();
+    }
+}
+
+int main() {
+    thread theDownloader(Download);
+    thread theDownloader2(Download2);
+
+    theDownloader.join();
+    theDownloader2.join();
+
+    cout << g_Data.size() << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 20000
+
+
+** std::thread Synchronization std::lock_guard
+
+#+LATEX: \captionof{listing}{Synchronization lock-guard}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+#include <thread> 
+#include <mutex>
+
+using namespace std;
+
+list<int> g_Data;
+const int SIZE = 10000;
+mutex mux_data {};
+
+void Download() {
+    for (int i = 0; i < SIZE; ++i) {
+        lock_guard<mutex> mtx(mux_data);   // RAII mux_data is destryed when mtx exits.     
+        if(i == 500)                
+            return;
+    }
+}
+
+void Download2() {
+    for (int i = 0; i < SIZE; ++i) {
+        lock_guard<mutex> mtx(mux_data);
+        g_Data.push_back(i);
+    }
+}
+
+int main() {
+    thread theDownloader(Download);
+    thread theDownloader2(Download2);
+
+    theDownloader.join();
+    theDownloader2.join();
+
+    cout << g_Data.size() << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 10000
+
+#+ATTR_LATEX: :options {CPU utilsation}
+#+BEGIN_infobox
+As long as the resource is locked, the thread is sleeping thus the CPU
+utilisation might not be efficient.\\
+
+A better solution might be not to share the data.
+#+END_infobox
+
+
+** std:Sthread Functions & std::this Namespace
+
+#+LATEX: \captionof{listing}{More Thread Features}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <list>
+#include <vector>
+#include <thread> 
+#include <mutex>
+#include <pthread.h>
+
+using namespace std;
+
+void Process() {
+
+    pthread_setname_np(pthread_self(), "Worker-01");
+    this_thread::sleep_for(chrono::seconds(2));
+}
+
+int main() {
+    thread t1(Process);
+
+    auto id1 = t1.get_id();
+    cout << id1 << endl;
+
+    auto handle = t1.native_handle();
+    // pthread_setname_np(handle, "Worker-011");
+
+    vector<char> buffer(16);  // the kernel may hold only 15 characters
+    pthread_getname_np(handle, buffer.data(), buffer.size());
+    std::cout << "Name: " << buffer.data() << '\n';
+
+    int cores = thread::hardware_concurrency();
+    cout << "Cores: " << cores << endl;
+    t1.join();
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 140586819524288
+: Name: Worker-01
+: Cores: 22
+
+
+** Task Based Concurrency - Part I
+
+
+#+LATEX: \captionof{listing}{High Level Concurrency}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+void Downloader() {
+    for (int i = 0; i < 10; ++i) {
+        cout << '.' ;
+        this_thread::sleep_for(300ms);
+    }
+}
+
+int main() {
+
+    future<void> result = async(Downloader);
+    cout << "main() threading continues execution..";
+
+    result.get();   // simiöar to jon
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: main() threading continues execution............
+
+
+** Task Based Concurrency - Part II
+
+*** std::async
+- Part of high-level concurrency
+- Executes a /callable/ object of a function in a seperate thread
+- Returns a /std::future/ objec that provides access to the result of
+  the callable
+- Include the header /<future>/
+
+  /future<return_type> async (Callable, args)/
+  /future<return_type> async(launch policy, Callable, args)/
+
+*** Launch Policy
+  - /std::launch::deferred/ - the task is executed synchronously
+  - /std::launch::async/ - the task is executed asynchronoulsy
+
+- Call to /std::async/ without a launch policy may not always create a
+  new thread
+  - depends on the compiler implementation
+  - To force /std:async/ to execute the task asynchronoulsy, use the
+    async lauch policy explicittly
+
+- If new thread cannot be created with async launch policy,
+  /std::system_error/ exception is thrown
+
+*** Task Arguments & Return Value
+- Arguments can be specified in /std::async/ for the task
+- By default, the arguments are passed by value
+- To pass by reference, use the reference wrapper, /std::ref/
+  - for constant reference, use /std::cref/
+- To get a value from a task, simply return it from the corresponding function
+- This value is than availble throuhg the future object
+*** std::future
+- Used for communication between threads
+- Has a *shared state* that can be accessed in a different thread
+- Create through a /std::promise/ object
+  - created by /std::async/, that directly returns a future object
+  - /std::promise/ is an *input* channel
+  - /std::future/ is the *output* channel
+- The thread that reads the shared state will wait until the future is
+  ready (with the shared state)
+- Promise/future pair allow safe data sharing between threads
+
+
+** Launch Policies
+
+#+LATEX: \captionof{listing}{Launch Policies}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(int count) {
+    int sum {};
+    for (int i = 0; i < count; ++i) {
+        sum += i;
+        cout << '.';
+        this_thread::sleep_for(300ms);
+    }
+    return sum;
+}
+
+int main() {
+
+    future<int> result = async(launch::async, Operation, 10);
+    // future<int> result = async(launch::deferred, Operation, 10);
+    this_thread::sleep_for(1s);
+    cout << "main() thread continues execution..";
+    if(result.valid()) {
+        auto sum = result.get();            
+        cout << "Sum: " << sum << endl;   // simiöar to jon
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: ....main() thread continues execution........Sum: 45
+
+
+#+ATTR_LATEX: :options {get()}
+#+BEGIN_infobox
+get() will make the main thread wait. \\
+\\
+The shared state is destroyed and cannot get it again and the future
+becomes invalid.
+#+END_infobox
+
+
+#+ATTR_LATEX: :options {deferred}
+#+BEGIN_infobox
+With deferred launch policy the Task gets invoked when you try to get
+the shared state of the task. And we get the shared state of the task
+when calling get() on the future.
+#+END_infobox
+
+
+** std::future Wait Functions
+
+#+LATEX: \captionof{listing}{Wait}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(int count) {
+    int sum {};
+    for (int i = 0; i < count; ++i) {
+        sum += i;
+        cout << '.';
+        this_thread::sleep_for(300ms);
+    }
+    return sum;
+}
+
+int main() {
+
+    future<int> result = async(launch::async, Operation, 10);
+    // future<int> result = async(launch::deferred, Operation, 10);
+    this_thread::sleep_for(1s);
+    cout << "main() thread continues execution..";
+    if(result.valid()) {
+        result.wait();
+        auto sum = result.get();            
+        cout << "Sum: " << sum << endl;   // simiöar to jon
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: ....main() thread continues execution........Sum: 45
+
+
+
+#+LATEX: \captionof{listing}{Wait For}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(int count) {
+    int sum {};
+    for (int i = 0; i < count; ++i) {
+        sum += i;
+        cout << '.';
+        this_thread::sleep_for(300ms);
+    }
+    return sum;
+}
+
+int main() {
+
+    future<int> result = async(launch::async, Operation, 10);
+    // future<int> result = async(launch::deferred, Operation, 10);
+    this_thread::sleep_for(1s);
+    cout << "main() thread continues execution..";
+    if(result.valid()) {
+        auto status = result.wait_for(4s);   // wait for certain amount of time
+
+        switch(status) {
+        case future_status::deferred: // wait not possible
+            cout << "Task is synchronous\n";
+            break;
+        case future_status::ready:  // the result is ready
+            cout << "Result is Ready\n";
+            break;
+        case future_status::timeout:
+            cout << "Task is still running\n";
+            break;
+        }
+        auto sum = result.get();            
+        cout << "Sum: " << sum << endl;   // simiöar to jon
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: ....main() thread continues execution........Result is Ready
+: Sum: 45
+
+#+LATEX: \captionof{listing}{Wait Until}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(int count) {
+    int sum {};
+    for (int i = 0; i < count; ++i) {
+        sum += i;
+        cout << '.';
+        this_thread::sleep_for(300ms);
+    }
+    return sum;
+}
+
+int main() {
+
+    future<int> result = async(launch::async, Operation, 10);
+    // future<int> result = async(launch::deferred, Operation, 10);
+    this_thread::sleep_for(1s);
+    cout << "main() thread continues execution..";
+    if(result.valid()) {
+
+        auto timepoint = std::chrono::system_clock::now();
+        timepoint += 1s;
+        auto status = result.wait_until(timepoint);   // wait until timepoint is reached
+        switch(status) {
+        case future_status::deferred: // wati not possible
+            cout << "Task is synchronous\n";
+            break;
+        case future_status::ready:  // the result is ready
+            cout << "Result is Ready\n";
+            break;
+        case future_status::timeout:
+            cout << "Task is still running\n";
+            break;
+        }
+        auto sum = result.get();            
+        cout << "Sum: " << sum << endl;   // simiöar to jon
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: ....main() thread continues execution.....Task is still running
+: ...Sum: 45
+
+
+** std::promise
+
+- Provides a way to store a value or an exception
+- This is called the *shared state*
+- This state can be accessed later from another thread through a
+  /future/ object
+- /promise/future/ are two *endpoints of a communication channel
+- One operation stores a value in a /promise/ and the other operation
+  will retrieve it through a /future/ *asynchronoulsy*
+- These operations are *synchronized*, therefore *thread-safe*
+- /promise/ object can be used only once
+
+
+#+LATEX: \captionof{listing}{Promise - Future}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(std::promise<int>& data) {
+    auto f = data.get_future();                 // get future
+    cout <<"[task] waiting for count" << endl;
+    auto count = f.get();                       // get data
+    int sum {};
+    for (int i = 0; i < count; ++i) {
+        sum += i;
+        cout << '.';
+        this_thread::sleep_for(300ms);
+    }
+    return sum;
+}
+
+int main() {
+
+    for(int i = 0; i < 3; ++i) {
+        promise<int> data;
+        future<int> result = async(launch::async, Operation, std::ref(data));
+        this_thread::sleep_for(100ms);
+        cout << "[main] Setting the data in promise: ";  
+        data.set_value(10+i);           // set data
+        if(result.valid()) {
+
+            auto sum = result.get();            
+            cout << "Sum: " << sum << endl;   // simiöar to jon
+        }
+        cout << '\n';
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [task] waiting for count
+: [main] Setting the data in promise: ..........Sum: 45
+: 
+: [task] waiting for count
+: [main] Setting the data in promise: ...........Sum: 55
+: 
+: [task] waiting for count
+: [main] Setting the data in promise: ............Sum: 66
+: 
+
+
+#+LATEX: \captionof{listing}{Promise - Future}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(std::future<int>& f) {
+    cout <<"[task] waiting for count" << endl;
+    auto count = f.get();                       // get data (blocking)
+    int sum {};
+    for (int i = 0; i < count; ++i) {
+        sum += i;
+        cout << '.';
+        this_thread::sleep_for(300ms);
+    }
+    return sum;
+}
+
+int main() {
+
+    for(int i = 0; i < 3; ++i) {
+        promise<int> data;
+        auto f = data.get_future();
+        future<int> result = async(launch::async, Operation, std::ref(f));
+        this_thread::sleep_for(100ms);
+        cout << "[main] Setting the data in promise: ";  
+        data.set_value(10+i  );           // set data
+        if(result.valid()) {
+
+            auto sum = result.get();            
+            cout << "Sum: " << sum << endl;   // simiöar to jon
+        }
+        cout << '\n';
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [task] waiting for count
+: [main] Setting the data in promise: ..........Sum: 45
+: 
+: [task] waiting for count
+: [main] Setting the data in promise: ...........Sum: 55
+: 
+: [task] waiting for count
+: [main] Setting the data in promise: ............Sum: 66
+: 
+
+#+ATTR_LATEX: :options {High Level Concurrency}
+#+BEGIN_infobox
+So, this is how you can share data between the threads without having
+to do manual thread synchronization.\\
+\\
+Pomise and future can also be used with low-level concurrency.
+#+END_infobox
+
+
+** Handling Exceptions
+
+#+LATEX: \captionof{listing}{Propaget an exception from main thread (promise) to a task (future)}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(std::promise<int>& data) {
+    auto f = data.get_future();                     // get future
+    try {
+        throw runtime_error{"Counter failed"};
+        cout << "[task] waiting for count" << endl;
+        auto count = f.get();                        // get data
+        int sum {};
+        for (int i = 0; i < count; ++i) {
+            sum += i;
+            cout << '.' ;
+            this_thread::sleep_for(300ms);
+        }
+        return sum;
+    }
+    catch(exception &ex) {
+        cout << "[task] Exception: " << ex.what() << endl;
+        throw;
+    }
+}
+
+int main() {
+
+    promise<int> data;
+    future<int> result = async(launch::async, Operation, std::ref(data));
+    this_thread::sleep_for(100ms);
+    cout << "[main] Setting the data in promise: " << endl;;  
+    try {
+        throw runtime_error{"Data not available"};
+        data.set_value(10);           // set data
+        if(result.valid()) {
+            auto sum = result.get();            
+            cout << "Sum: " << sum << endl;   // simiöar to jon
+        }
+        cout << '\n';
+    }catch(exception &ex) {
+        data.set_exception(make_exception_ptr(ex)); // Exception Pointer
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [task] Exception: Counter failed
+: [main] Setting the data in promise: 
+
+
+#+LATEX: \captionof{listing}{Propaget an exception the task (future) to the from main thread (promise)}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -pthread -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <future>
+#include <thread>
+
+using namespace std;
+using namespace chrono_literals;
+
+int Operation(std::promise<int>& data) {
+    auto f = data.get_future();                     // get future
+    try {
+        throw runtime_error{"Counter failed"};
+        cout << "[task] waiting for count" << endl;
+        auto count = f.get();                        // get data
+        int sum {};
+        for (int i = 0; i < count; ++i) {
+            sum += i;
+            cout << '.' ;
+            this_thread::sleep_for(300ms);
+        }
+        return sum;
+    }
+    catch(exception &ex) {
+        // no exception pointer needed to propaget from task to main
+        cout << "[task] Exception: " << ex.what() << endl;
+        return -1;
+    }
+}
+
+int main() {
+
+    promise<int> data;
+    future<int> result = async(launch::async, Operation, std::ref(data));
+    this_thread::sleep_for(100ms);
+    cout << "[main] Setting the data in promise: " << endl;;  
+    try {
+        throw runtime_error{"Data not available"};
+        data.set_value(10);           // set data
+        if(result.valid()) {
+            auto sum = result.get();            
+            cout << "Sum: " << sum << endl;   // simiöar to jon
+        }
+        cout << '\n';
+    }catch(exception &ex) {
+        data.set_exception(make_exception_ptr(ex)); // Exception Pointer 
+        cout << "[main] Exception: " << ex.what();
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: [task] Exception: Counter failed
+: [main] Setting the data in promise: 
+: [main] Exception: Data not available
+
+#+ATTR_LATEX: :options {Promise}
+#+BEGIN_infobox
+Proimse is useful for sharing data between teh threads without having
+to manually perform, thread synchronisation.
+#+END_infobox

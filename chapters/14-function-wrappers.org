@@ -1,0 +1,424 @@
+
+* Function Rappers (C++11)
+
+** std::function - I
+
+- A general-purpose function wrapper
+- Can *store* any entity thac can be *invoke* like a function. and *target* that can be invoked with
+- We can store *function pointers* & *function objects* inside /std::function/.
+- Stored object is callted the *target*
+- This target can be invoked with the same syntax through /std::function/ object
+- Invocation without a target throws /std::bad_function_call/ exception
+
+*std::function Usage*
+. std::function is a class template:  /std::function<function signature> object = {callable};/
+
+#+LATEX: \captionof{listing}{std::function Examples}
+#+BEGIN_SRC C++ :exports code 
+#include <functional>
+int Square (int);
+int *Alloc(size_t_bytes);
+
+std::function<int(int)>        f1 = Square;                        f1(3);
+std::function<int*(size_t)>    f2 = Alloc;                         f3(1024);
+std::function<bool(int)>       f3 = [](int x) {return x%2 == 0;});    f3(3);
+#+END_SRC
+
+
+** std::function - II
+
+#+LATEX: \captionof{listing}{std::function Solve Problems}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <functional>
+
+using namespace std;
+
+int Square(int x) {
+    return x*x;
+}
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+struct Max {
+    int operator()(int x, int y) const {
+        return x > y ? x : y;
+    }
+};
+
+
+int main() {
+
+    try {
+        function<int(int)> f1 /* = Square */;  // f1 can hold any address that matches the signature
+        if(f1) {                               // check for target
+            cout << f1(3) << endl;
+        } else {
+            cout << "No target to invoke!" << endl;
+        }
+
+        Max m {};
+        function<int(int,int)> f2 = m;
+        cout << f2(7, 8) << endl;
+
+        function<bool(int)> f3 = [](int x) {return x%2 == 0;};
+        cout << "is even: " << boolalpha << f3(8) << endl;
+    }
+    catch (const std::exception& ex) {
+        cout << "Exception -> " << ex.what() << endl;
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: No target to invoke!
+: 8
+: is even: true
+
+
+#+LATEX: \captionof{listing}{std::function Usage}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <functional>
+
+using namespace std;
+
+int Square(int x) {
+    return x*x;
+}
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+int Subtract(int x, int y) {
+    return x - y;
+}
+
+
+struct Max {
+    int operator()(int x, int y) const {
+        return x > y ? x : y;
+    }
+};
+
+int Operation(int x, int y, function<int(int,int)>  callback) {
+    return callback(x,y);
+}
+
+int main() {
+
+    try {
+        function<int(int, int)> f1 = Add;
+        cout << Operation(3,5, f1) << endl;
+        f1 = Subtract;
+        cout << Operation(3,5, f1) << endl;
+        cout << Operation(3,5, [](int x, int y) {return x*y;}) << endl;
+    }
+    catch (const std::exception& ex) {
+        cout << "Exception -> " << ex.what() << endl;
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 8
+: -2
+: 15
+
+
+** std::bind - I
+- Wrapper that can bind some arguments to a given function
+- The arguments to the target function are represented using
+  placeholders or directly bound to specific values.
+- Placeholders are represented using constant objects of unspecified type in /std::placehlders/ namespace
+  - named _1, _2,...,_N
+- Can be used to invoke a function that accepts n arguments as a function with n-m arguments
+- Returns a function object through which the target is invoked
+
+*std::function Usage*
+. std::bind is a class template:  /std::bind<callable, arg1, arg2,...argN>;/
+
+#+LATEX: \captionof{listing}{std::bind Examples}
+#+BEGIN_SRC C++ :exports code 
+#include <functional>
+int Square (int);
+int Print(const char *);
+
+auto f1 = std::bind(Square 3);     f1();
+auto f2 = std::bind(Print, _1);    f2("Hello");
+#+END_SRC
+
+
+** std::bind - II
+
+#+LATEX: \captionof{listing}{std::bind Usage}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <functional>
+
+using namespace std;
+
+int Square(int x) {
+    return x*x;
+}
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+int Subtract(int x, int y) {
+    return x - y;
+}
+
+
+struct Max {
+    int operator()(int x, int y) const {
+        return x > y ? x : y;
+    }
+};
+
+int Operation(int x, int y, function<int(int,int)>  callback) {
+    return callback(x,y);
+}
+
+int main() {
+
+    std::function<int(int,int)> f1 = bind(Subtract, std::placeholders::_1, std::placeholders::_2);
+    cout << f1(13,25) << endl;  // Subtract(12,25)
+
+    std::function<int(int,int)> f2 = bind(Subtract, std::placeholders::_2, std::placeholders::_1);
+    cout << f2(13,25) << endl;  // Subtract(25,12)
+
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: -12
+: 12
+
+#+LATEX: \captionof{listing}{std::bind Usage - Syntax Aid}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <functional>
+
+using namespace std;
+using namespace placeholders;
+
+int Square(int x) {
+    return x*x;
+}
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+int Subtract(int x, int y) {
+    return x - y;
+}
+
+void Print(const char * p) {
+    cout << p << endl;
+}
+
+struct GreaterThan {
+    bool operator()(int x, int y) const {
+        return x > y;
+    }
+};
+
+struct Max {
+    int operator()(int x, int y) const {
+        return x > y ? x : y;
+    }
+};
+
+int Operation(int x, int y, function<int(int,int)>  callback) {
+    return callback(x,y);
+}
+
+int Accumulate(int x, int y, int z) {
+    return x + y + z;
+}
+
+int main() {
+
+    auto f1 = bind(Subtract, _1, _2);
+    cout << f1(13,25) << endl;  // Subtract(12,25)
+
+    auto f2 = bind(Subtract, _2, _1);
+    cout << f2(13,25) << endl;  // Subtract(25,12)
+
+    auto f3 = bind(Subtract, 23, 11);
+    cout << f3() << endl;  // Subtract(23,11)
+
+    auto f4 = bind(Subtract, _1, 5);
+    cout << f4(100) << endl;  // Subtract(100,5)
+
+    auto gt = bind(GreaterThan{}, -1,-2);
+    cout << boolalpha << gt(5,7) << endl;
+        
+    auto acc = bind(Accumulate, _1, _2, 0);
+    cout << Operation(8, 5, acc) << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: -12
+: 12
+: 12
+: 95
+: true
+: 13
+
+
+** std::bind - III
+
+#+LATEX: \captionof{listing}{std::bind Replacement by lambda function}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <functional>
+
+using namespace std;
+using namespace placeholders;
+
+int Square(int x) {
+    return x*x;
+}
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+int Subtract(int x, int y) {
+    return x - y;
+}
+
+void Print(const char * p) {
+    cout << p << endl;
+}
+
+struct GreaterThan {
+    bool operator()(int x, int y) const {
+        return x > y;
+    }
+};
+
+struct Max {
+    int operator()(int x, int y) const {
+        return x > y ? x : y;
+    }
+};
+
+int Operation(int x, int y, function<int(int,int)>  callback) {
+    return callback(x,y);
+}
+
+int Accumulate(int x, int y, int z) {
+    return x + y + z;
+}
+
+int main() {
+
+    // auto f4 = bind(Subtract, _1, 5);
+    auto f4 = [](int x) {return Subtract(x,5);}; 
+    cout << f4(100) << endl;  // Subtract(100,5)
+    
+    // auto gt = bind(GreaterThan{}, -2,-1);
+    auto gt = [](int x, int y){return GreaterThan{}(y,x); };
+    cout << boolalpha << gt(5,7) << endl;
+        
+    //auto acc = bind(Accumulate, _1, _2, 0);
+    auto acc = [](int x, int y){return Accumulate(x,y,0);};
+    cout << Operation(8, 5, acc) << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 95
+: true
+: 13
+
+#+ATTR_LATEX: :options {Lambda Expression}
+#+BEGIN_infobox
+Binder are superseeded by lambda expressions since they are mutch
+easier to use.
+#+END_infobox
+
+#+LATEX: \captionof{listing}{std::bind Replacement by lambda function and correct type forewarding also see C++20}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++20 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <functional>
+
+using namespace std;
+using namespace placeholders;
+
+int Square(int x) {
+    return x*x;
+}
+
+int Add(int x, int y) {
+    return x + y;
+}
+
+int Subtract(int x, int y) {
+    return x - y;
+}
+
+void Print(const char * p) {
+    cout << p << endl;
+}
+
+struct GreaterThan {
+    bool operator()(int x, int y) const {
+        return x > y;
+    }
+};
+
+struct Max {
+    int operator()(int x, int y) const {
+        return x > y ? x : y;
+    }
+};
+
+int Operation(int x, int y, function<int(int,int)>  callback) {
+    return callback(x,y);
+}
+
+int Accumulate(int x, int y, int z) {
+    return x + y + z;
+}
+
+int main() {
+
+    // Type correctness in C++17
+    auto f4 = [](auto && x) {return Subtract(forward<decltype(x)>(x),5);}; 
+    cout << f4(100) << endl;  // Subtract(100,5)
+    
+    // C++20 template type parameters in lambda
+    auto gt = []<typename T>(T && x, T && y){return GreaterThan{}(forward<T>(y),forward<T>(x)); };
+    cout << boolalpha << gt(5,7) << endl;
+        
+    // C++20 template type parameters in lambda
+    auto acc = []<typename T>(T && x, T && y){return Accumulate(forward<T>(x),forward<T>(y),0);};
+    cout << Operation(8, 5, acc) << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 95
+: true
+: 13
+

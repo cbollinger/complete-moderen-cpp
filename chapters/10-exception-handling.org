@@ -1,0 +1,561 @@
+* Exception Handling
+
+** Basic Exception Handling - Part I
+
+*Exception Handling*
+- Mechanism to handle errors in programs that occur at runtime
+- These errors are called exceptions
+- Exist outside the normal functioning of the program
+- Require immediate handling by the program
+- If not handled, the program crashes
+- Cannot be ignored, unlike C error handling
+  
+#+LATEX: \captionof{listing}{C-Error Handling}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+
+using namespace std;
+
+int ProcessRecords(int count) {
+
+    int *pArray = (int*)malloc(count * sizeof(int));
+    if(pArray == nullptr) {
+        cout << "Failed to allocate memmory" << endl;
+        return -1;
+    }
+    for(int i = 0; i < count; i++) {
+        pArray[i] = i;;
+    }
+    free(pArray);
+    return 0;
+}
+
+int main() {
+
+    ProcessRecords(numeric_limits<int>::max());  // return type can be igonerd
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+*Mechanism*
+
+- *try*
+  - creates a scope/block & exception causing code appears here
+  - can contain other try-catch statements
+
+- *throw*
+  - throws an exception from the try block
+  - exception is object that is constructed in throw statements
+
+- *catch*
+  - handler that catches the exception object
+  - should appear just after the try block
+  - multiple catch blocks can exist
+
+
+
+#+LATEX: \captionof{listing}{Exception Handler}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+
+using namespace std;
+
+void ProcessRecords(int count) {
+
+    int *pArray = (int*)malloc(count * sizeof(int));
+    if(pArray == nullptr) {
+        throw runtime_error("Failed to allocate memmory");
+    }
+    for(int i = 0; i < count; i++) {
+        pArray[i] = i;;
+    }
+    free(pArray);
+}
+
+int main() {
+
+    try {
+        ProcessRecords(numeric_limits<int>::max());
+    }
+    catch (runtime_error &ex) {
+        cout << ex.what() << endl;
+
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+** Basic Exception Handling - Part II (multiple Catch Blocks)
+
+#+LATEX: \captionof{listing}{Exception Handler}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+
+using namespace std;
+
+void ProcessRecords(int count) {
+
+    if (count < 10) {
+        throw out_of_range("Count should be greater than 10");
+    }
+    int *p = new int[count]; // throws an exception of type bad_alloc
+    (void)p;
+    int *pArray = (int*)malloc(count * sizeof(int));
+    if(pArray == nullptr) {
+        throw runtime_error("Failed to allocate memmory");
+    }
+    for(int i = 0; i < count; i++) {
+        pArray[i] = i;;
+    }
+    free(pArray);
+}
+
+int main() {
+
+    try {
+        // ProcessRecords(numeric_limits<int>::max());
+        ProcessRecords(9);
+    }
+    // catch (runtime_error &ex) {
+    //  cout << ex.what() << endl;
+    // }
+    // catch(out_of_range &ex) {
+    //  cout << ex.what() << endl;
+    // }
+    // catch(bad_alloc &ex) {
+    //  cout << ex.what() << endl;
+    // }
+    catch(exception &ex) {
+        cout << ex.what() << endl;
+    }
+    catch(...) {                           // catche also undocumented exceiption
+        cout << "Exception" << endl;
+    }
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Exception
+
+
+** Basic Exception Handling - Part III (Stack unwinding)
+
+#+LATEX: \captionof{listing}{Exception Handler - objects on Stack}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+
+using namespace std;
+
+class Test {
+public: 
+    Test() {cout << "Test(): Acquire resources" << endl;};
+    ~Test() {cout << "~Test(): Release resources" << endl;};
+};
+
+void ProcessRecords(int count) {
+    Test t;
+    if (count < 10) {
+        throw out_of_range("Count should be greater than 10");
+    }
+    int *p = new int[count]; // throws an exception of type bad_alloc
+    (void)p;
+    int *pArray = (int*)malloc(count * sizeof(int));
+    if(pArray == nullptr) {
+        throw runtime_error("Failed to allocate memmory");
+    }
+    for(int i = 0; i < count; i++) {
+        pArray[i] = i;;
+    }
+    free(pArray);
+    delete[] p;
+}
+
+int main() {
+
+    try {
+        // ProcessRecords(numeric_limits<int>::max());
+        ProcessRecords(9);
+    }
+    catch(exception &ex) {
+        cout << ex.what() << endl;
+    }
+    catch(...) {                           // catche also undocumented exceiption
+        cout << "Exception" << endl;
+    }
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Test(): Acquire resources
+: ~Test(): Release resources
+: Count should be greater than 10
+
+
+#+LATEX: \captionof{listing}{Exception Handler - objects on Heap}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+
+using namespace std;
+
+class Test {
+public: 
+    Test() {cout << "Test(): Acquire resources" << endl;};
+    ~Test() {cout << "~Test(): Release resources" << endl;};
+};
+
+void ProcessRecords(int count) {
+    Test *t = new Test {};
+    if (count < 10) {
+        throw out_of_range("Count should be greater than 10");
+    }
+    int *p = new int[count]; // throws an exception of type bad_alloc
+    (void)p;
+    int *pArray = (int*)malloc(count * sizeof(int));
+    if(pArray == nullptr) {
+        throw runtime_error("Failed to allocate memmory");
+    }
+    for(int i = 0; i < count; i++) {
+        pArray[i] = i;;
+    }
+    free(pArray);
+    delete[] p;
+    delete t;     // after an exception the memory is not going to be freed!!!!
+}
+
+int main() {
+
+    try {
+        // ProcessRecords(numeric_limits<int>::max());
+        ProcessRecords(9);
+    }
+    catch(exception &ex) {
+        cout << ex.what() << endl;
+    }
+    catch(...) {                           // catche also undocumented exceiption
+        cout << "Exception" << endl;
+    }
+
+    return 0;
+}
+#+END_SRC
+
+
+#+RESULTS:
+: Test(): Acquire resources
+: Count should be greater than 10
+
+Destructor of ~Test() is not called here!
+
+#+ATTR_LATEX: :options {Stack Unwinding}
+#+BEGIN_infobox
+Stack unwinding will destroy only local objects. If any objects have
+been created on the heap, they will not be destroyed and infact the
+memory can be leaked.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Exception Handler - objects on Heap with Smart Pointer (RAII)}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <vector>
+
+using namespace std;
+
+class Test {
+public: 
+    Test() {cout << "Test(): Acquire resources" << endl;};
+    ~Test() {cout << "~Test(): Release resources" << endl;};
+};
+
+void ProcessRecords(int count) {
+    unique_ptr<Test> t{new Test{}};
+    if (count < 10) {
+        throw out_of_range("Count should be greater than 10");
+    }
+    vector<int> p;     
+    p.reserve(count);    // throws an exception of type bad_alloc
+
+    vector<int> pArray;
+    p.reserve(count);    // throws an exception of type bad_alloc
+
+    for(int i=0; i<count; ++i) {
+        pArray.push_back(i);
+        cout << pArray[i] <<", ";
+    }
+    cout << endl;
+}
+
+int main() {
+
+    try {
+        // ProcessRecords(numeric_limits<int>::max());
+        ProcessRecords(9);
+    }
+    catch(exception &ex) {
+        cout << ex.what() << endl;
+    }
+    catch(...) {                           // catche also undocumented exceiption
+        cout << "Exception" << endl;
+    }
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Test(): Acquire resources
+: ~Test(): Release resources
+: Count should be greater than 10
+
+
+#+ATTR_LATEX: :options {Avoid Manual Resource Management}
+#+BEGIN_infobox
+Use Smart Pointers and standard containers instead.
+#+END_infobox
+
+
+
+** Basic Exception Handling - Part IV (Nested Exceptions)
+
+
+#+LATEX: \captionof{listing}{Exception Handler - Nested Exceptions}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <vector>
+#include <random>
+
+using namespace std;
+
+class Test {
+public: 
+    Test() {cout << "Test(): Acquire resources" << endl;};
+    ~Test() {cout << "~Test(): Release resources" << endl;};
+};
+
+void ProcessRecords(int count) {
+    vector<int> pArray;
+    p.reserve(count);    // throws an exception of type bad_alloc
+    for(int i=0; i<count; ++i) {
+        pArray.push_back(i);
+    }
+    default_random_engine eng;
+    bernoulli_distribution dist;
+    int errors {};
+    for(const auto & element : pArray) {
+        try {
+            cout << "Processing record #: "<< element;
+            if(!dist(eng)) {
+                ++errors;
+                throw runtime_error("Could not process the record");
+            }
+            cout << endl;
+        }
+        catch (runtime_error &ex) {
+            cout << " [ERROR " << ex.what() << "]" << endl;
+            if(errors > 3) {
+                runtime_error err("Too many errors. Abandoning operation");
+                ex = err;
+                throw; // rethrow exception
+            }
+        }
+    }
+    cout << endl;
+}
+
+int main() {
+
+    try {
+        // ProcessRecords(numeric_limits<int>::max());
+        ProcessRecords(19);
+    }
+    catch(exception &ex) {
+        cout << ex.what() << endl;
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Test(): Acquire resources
+Processing record #: 0
+Processing record #: 1
+Processing record #: 2
+Processing record #: 3 [ERROR Could not process the record]
+Processing record #: 4 [ERROR Could not process the record]
+Processing record #: 5 [ERROR Could not process the record]
+Processing record #: 6
+Processing record #: 7 [ERROR Could not process the record]
+~Test(): Release resources
+Too many errors. Abandoning operation
+#+end_example
+
+
+#+ATTR_LATEX: :options {Nested Exception Handling}
+#+BEGIN_infobox
+Gives us more control and how the exception should be handled.
+#+END_infobox
+
+
+** Basic Exception Handling - Part V (Constructor & Destructor)
+
+#+LATEX: \captionof{listing}{Exception Handler - Constructor \& Destructor}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <vector>
+#include <random>
+
+using namespace std;
+
+class A{
+public:
+    A() {cout << "A()" << endl;}
+    ~A() {cout << "~A()" << endl;}
+};
+class B{
+public:
+    B() {cout << "B()" << endl;}
+    ~B() {cout << "~B()" << endl;}
+};
+
+
+class Test {
+    A *pA{};
+    B b{};      // calls destructor when exception
+    int *pInt{};
+    char *pStr{};
+    int *pArr{};
+public: 
+    Test() {
+    cout << "Test(): Acquire resources" << endl;
+    pA = new A;
+    pInt = new int;
+    throw runtime_error("Failed to initialize");
+    pStr = new char[1000];
+    pArr = new int[50000];
+    };
+    ~Test() {
+    cout << "~Test(): Release resources" << endl;
+    delete pA;
+    delete pInt;
+    delete [] pStr;
+    delete [] pArr;
+    };
+};
+
+int main() {
+    try {
+    Test t;
+    }
+    catch (runtime_error &ex) {
+    cout << ex.what();
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: B()
+: Test(): Acquire resources
+: A()
+: ~B()
+: Failed to initialize
+
+#+LATEX: \captionof{listing}{Exception Handler - Constructor \& Destructor with smart pointer}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <vector>
+#include <random>
+
+using namespace std;
+
+class A{
+public:
+    A() {cout << "A()" << endl;}
+    ~A() {cout << "~A()" << endl;}
+};
+class B{
+public:
+    B() {cout << "B()" << endl;}
+    ~B() {cout << "~B()" << endl;}
+};
+
+class Test {
+    unique_ptr<A> pA{};
+    B b{};      // calls destructor when exception
+    unique_ptr<int> pInt{};
+    string pStr{};
+    vector<int> pArr{};
+public: 
+    Test() {
+    pA.reset(new A);
+    cout << "Test(): Acquire resources" << endl;
+    throw runtime_error("Failed to initialize");
+    };
+    ~Test() {
+    cout << "~Test(): Release resources" << endl;
+    };
+};
+
+int main() {
+    try {
+    Test t;
+    }
+    catch (runtime_error &ex) {
+    cout << ex.what();
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: B()
+: A()
+: Test(): Acquire resources
+: ~B()
+: ~A()
+: Failed to initialize
+
+#+ATTR_LATEX: :options {Destructor}
+#+BEGIN_infobox
+Destructor should not throw an exception. Exception within destructor
+may lead to stack unwinding.  If a destructor needs to throw an
+exception, than the exception shall be handled within the destructor.
+#+END_infobox
+
+
+** Basic Exception Handling - Part VI (noexcept keyword)
+
+*noexcept*
+- Applied to functions (both in declaration & definition)
+- Indicates the function does not throw exceptions
+- Compiler can optimize the function code
+  - no need to generate stack unwinding code
+- An exception from such function terminates the program
+  - stack may or may not be unwinded
+- Not all functions should use noexcept specifier
+  - especially functions calling other functions (in library)
+  - such functions will be exception-neutral

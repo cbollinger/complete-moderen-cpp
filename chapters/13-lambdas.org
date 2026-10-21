@@ -1,0 +1,746 @@
+
+* Lambdas
+
+** Callbacks Revisted - Function Pointer
+
+*limitation of this solution:*
+- sort only in ascending order
+- C-Strings cannot be sorted (compare addresses)
+- The swap happens by value, move semenatic where more efficient
+
+#+LATEX: \captionof{listing}{Sort Algorithm Template}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T, int size>
+void Sort(T(&arr)[size]) {
+    for(int i = 0; i < size; ++i) {
+        for(int j = 0; j < (size -1); ++j) {
+            if(arr[j] > arr[j+1]) {     // will become a predicate
+                T temp = arr[j];        // swap by value
+                arr[j] = arr[j+1];
+                arr[j+1] = temp;
+            }
+        }
+    }
+}
+
+
+int main() {
+
+    int arr[] {10, 7, 3, 128, 64, 77, 99 };
+
+    cout << "unsorted values:\t";
+    for(const auto& a : arr)
+        cout << a << ", ";
+    cout << endl;
+
+    cout << "sorted values:\t";
+    Sort(arr);
+    for(const auto& a : arr)
+        cout << a << ", ";
+    cout << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: unsorted values:	10, 7, 3, 128, 64, 77, 99, 
+: sorted values:	3, 7, 10, 64, 77, 99, 128, 
+
+
+
+#+ATTR_LATEX: :options {Function Pointer}
+#+BEGIN_infobox
+With the help of a function pointer simplifes greatly the usage of the
+Sort Algorithm. We can control how the sorting should be performed.
+The function pointer is a Callback Function.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Sort Algorithm Template wiht Function Pointer}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+#include <string>
+
+using namespace std;
+
+// Function Prototype:
+using Comperator = bool(*)(int,int);
+
+template<typename T, int size>
+void Sort(T(&arr)[size], Comperator comp) {
+    for(int i = 0; i < size; ++i) {
+        for(int j = 0; j < (size -1); ++j) {
+            if( comp(arr[j], arr[j+1]) )    {
+                T temp   = move(arr[j]); 
+                arr[j]   = move(arr[j+1]);
+                arr[j+1] = move(temp);
+            }
+        }
+    }
+}
+
+// Prädicate: returns bool
+bool Comp1(int x, int y) {
+    return x > y;              // ascedning order
+}
+bool Comp2(int x, int y) {
+    return x < y;              // descending order
+}
+
+// C-String: Implement a predicate which usses strcmp.
+
+
+int main() {
+
+    int arr[] {10, 7, 3, 128, 64, 77, 99 };
+
+    cout << "unsorted values:\t";
+    for(const auto& a : arr)
+        cout << setw(5) << a;
+    cout << endl;
+
+    cout << "ascending order:\t";
+    Sort(arr, Comp1);
+    for(const auto& a : arr)
+        cout << setw(5) << a;;
+    cout << endl;
+    
+    cout << "descending order:\t";
+    Sort(arr, Comp2);
+    for(const auto& a : arr)
+        cout << setw(5) << a;
+    cout << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: unsorted values:	   10    7    3  128   64   77   99
+: ascending order:	    3    7   10   64   77   99  128
+: descending order:	  128   99   77   64   10    7    3
+
+
+*Limitiation*
+- Sort is a function template and will be instantiated at compile time
+- But comp is invocation of a function through its addess, that is this function cannot be *inlined*.
+- Function pointers cannot be optimized by the compiler
+- Function pointers point to global functions and global functions can not have a state.
+- *Comperator* is therefore a callback implemented as functionn pointer.
+
+
+** Callbacks - Function Objects
+
+#+ATTR_LATEX: :options {Function Object}
+#+BEGIN_infobox
+Is an object of a class or a structure that has the function operator *operator()* overloaded.
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Sort Algorithm Template wiht Function Object}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+// Function Prototype:
+// using Comperator = bool(*)(int,int);
+
+template<typename T, int size, typename Comparator> // The type of Comparator is unknown until it is invoked
+void Sort(T(&arr)[size], Comparator comp) {
+    for(int i = 0; i < size; ++i) {
+        for(int j = 0; j < (size -1); ++j) {
+            if( comp(arr[j], arr[j+1]) )    {
+                T temp   = move(arr[j]); 
+                arr[j]   = move(arr[j+1]);
+                arr[j+1] = move(temp);
+            }
+        }
+    }
+}
+
+// Prädicate: returns bool
+bool Comp1(int x, int y) {
+    return x > y;              // ascedning order
+}
+bool Comp2(int x, int y) {
+    return x < y;              // descending order
+}
+
+// C-String: Implement a predicate which usses strcmp.
+
+struct Comp3 {
+    bool operator()(int x, int y) {
+        return x > y;
+    }
+};
+
+struct Comp4 {
+    bool operator()(int x, int y) {
+        return x < y;
+    }
+};
+
+
+
+int main() {
+
+    int arr[] {10, 7, 3, 128, 64, 77, 99 };
+
+    cout << "unsorted values:\t";
+    for(const auto& a : arr)
+        cout << setw(5) << a;
+    cout << endl;
+
+    // Global Function Call
+    auto val1 = Comp1(3,5);
+    cout << boolalpha << val1 << endl;
+
+    // Local Function call
+    Comp3 comp3;
+    auto val3 = comp3(5,3);  // comp.operator(){3,5};
+    cout << boolalpha << val3 << endl;
+
+    cout << endl;
+    cout << "Usage with Function Pointer:" << endl;
+    cout << "ascending order:\t";
+    Sort(arr, Comp1);
+    for(const auto& a : arr)
+        cout << setw(5) << a;;
+    cout << endl;
+    
+    cout << "descending order:\t";
+    Sort(arr, Comp2);
+    for(const auto& a : arr)
+        cout << setw(5) << a;
+    cout << endl;
+
+
+    cout << endl;
+    cout << "Usage with Function Object:" << endl;
+    cout << "ascending order:\t";
+    Sort(arr, comp3);
+    for(const auto& a : arr)
+        cout << setw(5) << a;;
+    cout << endl;
+
+    Comp4 comp4;
+    cout << "descending order:\t";
+    Sort(arr, comp4);
+    for(const auto& a : arr)
+        cout << setw(5) << a;
+    cout << endl;
+
+
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+unsorted values:	   10    7    3  128   64   77   99
+false
+true
+
+Usage with Function Pointer:
+ascending order:	    3    7   10   64   77   99  128
+descending order:	  128   99   77   64   10    7    3
+
+Usage with Function Object:
+ascending order:	    3    7   10   64   77   99  128
+descending order:	  128   99   77   64   10    7    3
+#+end_example
+
+
+*** Function Object
+- Object with overloaded function call operator it is also know as the *functor*
+- Call to overloaded function call operator resembles a local function call
+- Can be used as a *callback* instead of function pointers
+- More efficient than function pointers
+- Usually implemented as structs
+
+*** Function Pointer vs. Function Objects
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>                        | <40>                              |
+| *Function Pointer*            | *Function Object*                   |
+|-----------------------------+-----------------------------------|
+| Invoked through a pointer   | Invoked through an object         |
+| Dynamic in nature           | Static in nature                  |
+| Can be specified at runtime | Must be specified at compile time |
+| Difficult to optimize       | Easy to optimize (Compiler)       |
+| Slow                        | Fast                              |
+| Cannot store state          | Can store state                   |
+
+
+** Lambda Expressions
+
+- Defines an anounymous function object
+- Syntactic shortcut for a function object
+- Can be passed as an argument
+- Can accpet parameters and return values
+- Typically, encapsulates a few lines of code
+- Behaves like a normal function when invoked
+- Replaces function objects
+- Internally, implemented as a nameless function object
+- Use auto to provide an explicite name
+
+
+#+LATEX: \captionof{listing}{Lambda Expressions}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+int main() {
+
+    []() {
+        cout  << "Welcome to Lambda Expressions 1" << endl;
+    }();  // <- Use the functor to invokde the overloaded function call operator.
+
+    auto fn = []() {  // <- give a name to the anounymous function
+        cout  << "Welcome to Lambda Expressions 2" << endl;
+    };  
+    fn();
+
+    cout << typeid(fn).name() << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Welcome to Lambda Expressions 1
+: Welcome to Lambda Expressions 2
+: Z4mainEUlvE0_
+
+
+** Lambda Expressions - Internals
+
+
+#+LATEX: \captionof{listing}{Lambda Expressions Return Type / Internals}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+template<typename T1, typename T2>
+struct Unnamed {
+    T2 operator()(T1 x, T2 y) const {
+        return x+y;
+    }
+};
+
+int main() {
+
+    auto sum1 = [](int x, int y) {             // return type is optional (same as arguments)
+        return x + y;
+    };  
+    cout << sum1(3,4) << endl;
+
+    auto sum2 = [](auto x, auto y)noexcept{ 
+        return x + y;
+    };  
+    cout << sum2(4, 4.3) << endl;
+
+    // same as
+    Unnamed<int,double> uname;
+    cout << uname(4, 4.3) << endl;
+    
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 7
+: 8.3
+: 8.3
+
+
+** Lambda Expressions Capture List - Part I
+
+#+LATEX: \captionof{listing}{A possible implementation of a Lampda Experession}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+template<typename T>
+struct __Unnamed {
+    int offset;
+    __Unnamed(int off) : offset(off) {
+    }
+
+    // To modifiy outher variable, the Functor must not be const wh
+    void operator()(T &x) /*const*/ { 
+        x += offset;
+        ++offset;
+    }
+};
+
+int main() {
+
+    __Unnamed<int> n(3);  // Offset = 3
+    int x = 5;
+    n(x);
+    cout << x << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 8
+
+
+
+#+LATEX: \captionof{listing}{Lambda Expressions Capture List}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+template<typename T, int size, typename Callback> 
+void ForEach(T(&arr)[size], Callback operation) {
+    for(int i=0; i<size; ++i) {
+        operation(arr[i]);
+    }
+}
+
+int main() {
+
+    int arr[] {10, 7, 3, 128, 64, 77, 99 };
+    cout << "Input Array:\t";
+    ForEach(arr, [](auto x) { cout << setw(5) << x << " ";});
+
+    int offset = 5;
+    cout << endl;
+    cout << "With Offset 5:\t";
+    ForEach(arr, [offset](auto &x) {x += offset;});   // offset is captured by value
+    ForEach(arr, [](auto x) { cout << setw(5) << x << " ";});
+
+    // MUTABLE REMOVES THE CONST FROM THE FUNCTOR
+    cout << endl;
+    cout << "Mutable Offset:\t";
+    ForEach(arr, [offset](auto &x) {x -= offset;});   // set to original values
+    ForEach(arr, [offset](auto &x) mutable { x += offset; ++offset; });
+    ForEach(arr, [](auto x) { cout << setw(5) << x << " ";});
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Input Array:	   10     7     3   128    64    77    99 
+: With Offset 5:	   15    12     8   133    69    82   104 
+: Mutable Offset:	   15    13    10   136    73    87   110 
+
+
+- /mutable/ removes the /const/ expression of the constant function call operator
+
+
+** Lambda Expression Capture List - Part II
+
+#+LATEX: \captionof{listing}{Capture List Modes}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+template<typename T, int size, typename Callback> 
+void ForEach(T(&arr)[size], Callback operation) {
+    for(int i=0; i<size; ++i) {
+        operation(arr[i]);
+    }
+}
+
+int main() {
+
+    int arr[] {10, 7, 3, 128, 64, 77, 99 };
+    cout << "Input Array:\t";
+    ForEach(arr, [](auto x) { cout << setw(5) << x << " ";});
+
+    cout << "\nArray Sum:\t";
+    int sum {};
+    ForEach(arr, [&sum](auto &x) {sum += x;});   // sum is captured by reference
+    cout <<setw(5) << sum << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Input Array:	   10     7     3   128    64    77    99 
+: Array Sum:	  388
+ 
+
+*** Capture List Modes
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>         | <40>                                                |
+| *Capture Mode* | *Explanation*                                         |
+|--------------+-----------------------------------------------------|
+| [var]        | Capture /var/ by value                                |
+| [=]          | Capture all enclosing scoope variables by value     |
+| [&var]       | Capture all enclosing scoope variables by reference |
+| [&,var]      | Capture /var/ by value & other variables by reference |
+| [=, &var]    | Capture /var/ by reference & other variables by value |
+| [this]       | Capture /this/ (captures all member variables)
+
+
+
+** Lambda Expression Capture List - Part III
+
+- Capture List is only required for local variables.
+- Global and Static variables are automatically captured
+
+#+LATEX: \captionof{listing}{Capture Mode this-Pointer}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+#include <string>
+
+using namespace std;
+
+template<typename T, int size, typename Callback> 
+void ForEach(T(&arr)[size], Callback operation) {
+    for(int i=0; i<size; ++i) {
+        operation(arr[i]);
+    }
+}
+
+class Product {
+
+    string name;
+    float price;
+public:
+    Product(const string &n, float p) : name(n), price(p) {
+
+    }
+    void AssignFinalPrice() {
+        float taxes[] {12, 5, 5};
+        float basePrice{ price };
+        ForEach(taxes, [basePrice, this](float tax) {  // capture all the member variables by value
+            float taxedPrice = basePrice * tax /100;
+            price += taxedPrice;
+        });
+    }
+    float GetPrice() {
+        return price;
+    }
+    const string& GetName() {
+        return name;
+    }
+    
+};
+int main() {
+
+    Product p{"Watch", 500};
+    p.AssignFinalPrice();
+    cout << p.GetName() << " " << p.GetPrice() << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Watch 610
+
+#+LATEX: \captionof{listing}{Lambda Expression within Lambda Expression}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <iomanip>
+#include <string>
+
+using namespace std;
+
+int main() {
+
+    [](int x) {
+        x *= 2;
+        [](int x) {
+            cout << x << endl;
+        }(x);
+    }(5);
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 10
+
+
+
+#+ATTR_LATEX: :options {Callback in C-Functions}
+#+BEGIN_infobox
+If a lambda expresson does not specify a capture clause, then it
+automatically decompose to a function pointer. \\
+\\
+Therefore lambda expression can be used as *callbacks in C functions*.
+
+#+END_infobox
+
+#+LATEX: \captionof{listing}{Lambda Expression as C-Function Callback}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    // int atexit( void (*func)(void) );
+    atexit([]() { cout << "Program is exitting.." << endl;});
+ 
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Program is exitting..
+
+
+** Generalized Capture (C++14)
+
+- This feature allows creation of new variables in the capture clause
+- The type of these variables is deduced from the type produced by the expression
+- Consequently, these variables must always be initialized
+- If the initializer expression is a variable, the new variable can have the same or a different name
+- To create a reference, you have to use /operator &/ before the variable name
+
+  - /[var=expression](args)/
+  - /[&var=expression(args)/
+
+
+#+LATEX: \captionof{listing}{Generalized Capture List}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    int x {5};
+    auto f = [y=x](int arg) {
+        return y + arg;
+    };
+
+    cout << f(5) << endl;
+        
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 10
+
+#+LATEX: \captionof{listing}{Generalized Capture List}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+int main() {
+
+    ofstream out{"../projects/file.txt"};
+    // out shall be used only within the lambda expression
+    auto write = [out = move(out)] (int x) mutable {
+
+        out << x;
+    };
+
+    write(200);
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+** Assignement
+
+#+LATEX: \captionof{listing}{T MAX(T,T); // Return largest Element}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iomanip>
+#include <iostream>
+
+using namespace std;
+
+template<typename T, int size, typename Callback> 
+void ForEach(T(&arr)[size], Callback operation) {
+    for(int i=0; i<size; ++i) {
+        operation(arr[i]);
+    }
+}
+
+
+
+int main() {
+
+    int arr[] {10, 7, 3, 128, 64, 77, 99 };
+    cout << "Input Array:\t";
+    ForEach(arr, [](auto x) { cout << setw(5) << x << " ";});
+
+    int Max {};
+    ForEach(arr, [&Max](auto x){ Max = Max > x ? Max : x; });
+
+    cout << endl;
+    cout << "Max Value is:\t" << setw(5) << Max;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Input Array:	   10     7     3   128    64    77    99 
+: Max Value is:	  128
+
+
+#+LATEX: \captionof{listing}{Greater}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iomanip>
+#include <iostream>
+
+using namespace std;
+
+template<typename T, typename Callback> 
+bool Greater(T a, T b, Callback operation) {
+    return operation(a, b);
+}
+
+
+int main() {
+
+    auto i = Greater<int>(7, 8, [](int a, int b){ return ( a > b ? true : false); });
+    cout << boolalpha << i << endl;
+
+    auto c = Greater<char>('8', '1', [](const char a, const char b){ return ( atoi(&a) > atoi(&b) ? true : false); });
+    cout << boolalpha << c << endl;
+
+    auto G = [](int a, int b) {return (a > b ? true : false);}(8,7);
+    cout << boolalpha << G << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: false
+: true
+: true

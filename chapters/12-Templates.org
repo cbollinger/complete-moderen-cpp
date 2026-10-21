@@ -1,0 +1,1993 @@
+
+* Templates
+
+
+** Introduction to Templates
+
+- Generalizes software components
+- Such components can be reused in different situations
+- Operate of any kind of data
+- High performance algorithm & classes
+- Compile time; no run time costs are involved
+- Libraries such as ATL, WTL, Boost, POCO, ACE, etc. use templates for implementation
+
+
+
+#+LATEX: \captionof{listing}{Find Maximum of two numbers}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int Max(int x, int y) {
+    return x > y ? x : y;
+}
+float Max(float x, float y) {
+    return x > y ? x : y;
+}
+
+int main() {
+
+    auto num1 = Max(3,8);
+    auto num2 = Max(3.1f,8.1f);
+    cout << "Integer:\t" << num1 << endl;
+    cout << "Float:\t"   << num2 << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Integer:	8
+: Float:	8.1
+
+
+#+LATEX: \captionof{listing}{Template Find Maximum of two numbers}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+T Max(T x, T y) {
+    return x > y ? x : y;
+}
+
+int main() {
+
+    auto num1 = Max(3,8);
+    auto num2 = Max(3.1f,8.1f);
+    cout << "Integer:\t" << num1 << endl;
+    cout << "Float:\t"   << num2 << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Integer:	8
+: Float:	8.1
+
+
+#+ATTR_LATEX: :options {typename vs. class}
+#+BEGIN_infobox
+The differnces between the keyword /class/ and /typename/ are apparent
+only when doing advanced template programming.
+#+END_infobox
+
+#+ATTR_LATEX: :options {Template Instantiation}
+#+BEGIN_infobox
+The process by which the function is generated is called
+*instantiation*:
+
+The compiler will examine the arguments of the function template and
+it'll accordingly, deduce the type of T. Once the type of T is
+deduced, the function is *instantiated* for this particular type.
+#+END_infobox
+
+
+
+** Assignment I
+*** ADD Template: Return the sum of two elements
+
+/int Add(int x,int y)/
+
+#+LATEX: \captionof{listing}{Return the sum of two elements}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+T ADD(T x, T y) {
+    return x + y;
+}
+
+int main() {
+
+    auto num1 = ADD(3,8);
+    auto num2 = ADD(3.1f,8.1f);
+    cout << "Integer:\t" << num1 << endl;
+    cout << "Float:\t\t"   << num2 << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Integer:	11
+: Float:		11.2
+
+*** Array Sum Template : Returns the sum of array elements
+
+/int ArraySum(const int *pArr, size_t arrSize);/
+
+#+LATEX: \captionof{listing}{Returns the sum of array elements}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+T ArraySum(T *x, size_t arrSize) {
+    T sum {};
+    for(size_t sz = 0; sz < arrSize; ++sz) {
+	sum += x[sz];
+    }
+    return sum;
+}
+
+int main() {
+
+    size_t sz = 5;
+    float myArray[5] {3.8f,3.8f,3.8f,3.8f,3.8f};
+
+    auto num = ArraySum(myArray, sz);
+        cout << "ArraySum:\t" << num << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: ArraySum:	19
+
+*** Max Template : Return the largest element in the array 
+
+/int Max(const int *pArr, size_t arrSize)/
+
+#+LATEX: \captionof{listing}{Returns the largest element in the array}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+T Max(T *x, size_t arrSize) {
+    T max = x[0];
+    for(size_t sz = 1; sz < arrSize; ++sz) {
+	max = max < x[sz] ? x[sz] : max;
+    }
+    return max;
+}
+
+int main() {
+
+    size_t sz = 5;
+    float myArray[5] {1.8f,5.8f,7.8f,4.8f,3.8f};
+
+    auto num = Max(myArray, sz);
+        cout << "Max:\t" << num << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Max:	7.8
+
+*** MinMax Template: Return the smallest and largest element in a pair
+
+/std::pair<int,int> MinMax(const int *pArr, size_t arrSize)/
+
+#+LATEX: \captionof{listing}{Return the smallest and largest element in a pair}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+pair<T,T> MinMax(T *x, size_t arrSize) {
+    T max = x[0];
+    for(size_t sz = 1; sz < arrSize; ++sz) {
+	max = max < x[sz] ? x[sz] : max;
+    }
+    T min = x[0];
+    for(size_t sz = 1; sz < arrSize; ++sz) {
+	min = min > x[sz] ? x[sz] : min;
+    }
+    return pair<T,T>(min,max);
+}
+
+int main() {
+
+    size_t sz = 5;
+    float myArray[5] {1.8f,5.8f,7.8f,4.8f,3.8f};
+
+    auto num = MinMax(myArray, sz);
+        cout << "Min:" << num.first << ", Max:" << num.second << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Min:1.8, Max:7.8
+
+
+
+** Template Argument Deduction & Instantiation
+
+*Template Argument Deduction:*
+- Process of decucing the types
+- Each function argument is examined
+- The corresponding type argument is deduced from the argument
+- The type argument deduction should lead to same type
+- Type conversion are not performed
+- After deduction, the templae is instantiated
+- Override deduction by specifying types in template argument list
+  /Max<int>(3,5);/
+
+*Template Instantiation:*
+- A template function of class only acts as a *blueprint*
+- The compiler generates code from the blueprint at *compile time*
+- Know as template instantiation
+- Occurs implicitly when
+  - a function template is invoked
+  - taking address of a function template
+  - using explicit instantiation
+  - creating explicit specialization
+- Full definition of template shoulb be available
+- Define in *header-file*
+
+#+LATEX: \captionof{listing}{Instantiation: Explicite \& by Address}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+T Max(T x, T y) {
+    std::cout << typeid(T).name() << std::endl;
+    return x > y ? x : y;
+}
+
+template char Max(char x, char y);     // Option d) explicite Instantiation for char types
+
+int main() {
+
+    Max(3, 8);
+    // Max(3.1,8.1f); Error can not deduce Type T one time double and one time float
+
+    Max(static_cast<float>(3.1), 8.1f);   // Option a) type cast
+
+    Max<float>(3.1, 8.1f);                // Option b) override deduction process
+                                          //           by explicit specification
+
+    int (*pfn)(int, int) = Max;           // instantiate by taking address
+    pfn(3,2);
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: i
+: f
+: f
+: i
+
+
+
+** Explicite Specialization
+
+- Template specialiced for a particular type
+- Provides correct semantic for some datatypes
+- Or implement an algorithm more optimally for a specific type
+- Explicte specialication must be defined in a *cpp file*
+- Primary template definition should occur before specialization
+
+  
+#+LATEX: \captionof{listing}{Explicite Specialization}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <cstring>
+
+using namespace std;
+
+template<typename T>
+T Max(T x, T y) {
+    //std::cout << typeid(T).name() << std::endl;
+    return x > y ? x : y;
+}
+
+// Explicite Instantiation
+template char Max(char x, char y);     // Option d) explicite Instantiation for char types
+
+// Explicite Spezialisation
+// Optional: Specifie the type for specialisation Max<const char *x>()
+template<> const char * Max(const char *x, const char *y) {
+cout << "Max<const *char>()" << endl;
+    return strcmp(x,y) > 0 ? x : y;
+}
+
+int main() {
+
+    const char *b{"B"};
+    const char *a{"Hallo World"};
+
+    auto m = Max(a,b);
+    cout << m << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Max<const *char>()
+: Hallo World
+
+
+
+** Non-type Template Arguments
+
+- Expression that is computed at compile time within a template argument list
+- Must be a constant expression (addresses,references,integrals,nullptr,enums)
+- Part of the template library
+- Used to implement std::begin & std::end functions
+
+#+LATEX: \captionof{listing}{Non-type Template Arguments}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+#include <cstring>
+
+using namespace std;
+
+template<typename T>
+T Max(T x, T y) {
+    //std::cout << typeid(T).name() << std::endl;
+    return x > y ? x : y;
+}
+
+// Explicite Instantiation
+template char Max(char x, char y);     // Option d) explicite Instantiation for char types
+
+// Explicite Spezialisation
+// Optional: Specifie the type for specialisation Max<const char *x>()
+template<> const char * Max(const char *x, const char *y) {
+    cout << "Max<const *char>()" << endl;
+    return strcmp(x,y) > 0 ? x : y;
+}
+
+template<int size>
+void Print() {
+    // ++size; // not allowdes size needs to be a constant expression
+    cout << size << endl;
+}
+
+template<typename T>
+T Sum1(T *pArr, int size) {
+    T sum {};
+    for(int i=0; i<size; ++i) {
+        sum += pArr[i];
+    }
+    return sum;
+}
+
+template<typename T, int size>
+T Sum2(T (&pArr)[size]) {  // pass a reference to array
+    T sum {};
+    for(int i=0; i<size; ++i) {
+        sum += pArr[i];
+    }
+    return sum;
+}
+
+
+int main() {
+
+    Print<3>(); // argument needs to be constant
+    int arr[] {3,4,5,6,7};
+    auto sum1 = Sum1(arr, 5);
+    //int (&ref)[5] = arr; // reference to array - size specification needed!
+    auto sum2 = Sum2(arr); 
+    cout << sum1 << ", " << sum2 << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 3
+: 25, 25
+
+#+ATTR_LATEX: :options {Reference to Array and None-type Arguments}
+#+BEGIN_infobox
+We can pass an array into a function without explicitely specifying the size.
+
+This is used by the standard template library to implement the global
+functions std::begin and std::end for arrays.
+#+END_infobox
+
+
+
+
+** Assignment III
+
+For the functions in questions 2,3 & 4 in Assignment I:
+
+- Modify to accept array by reference.
+- Specialize for an array of strings (const char *). Observe, the limitations.
+- Specialize for an array of std::strings. Compare with the previous implementation.
+- Define the specialized functions in a .h file and include it in multiple source (.cpp) files. Observe what happens.
+
+*** Array Sum Template : Returns the sum of array elements
+
+/int ArraySum(const int *pArr, size_t arrSize);/
+
+#+LATEX: \captionof{listing}{Returns the sum of array elements}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T, int arrSize>
+T ArraySum(T (&x)[arrSize]) {
+    T sum {};
+    for(size_t sz = 0; sz < arrSize; ++sz) {
+        sum += x[sz];
+    }
+    return sum;
+}
+
+// Explicite Spezialisation
+// Optional: Specifie the type for specialisation ArraySum<const char *x>()
+template<> const char * ArraySum(char (&x)[arrSize]) {
+    cout << "ArraySum<char (&x)[arrSize]>()" << endl;
+
+    char sum {};
+    for(size_t sz = 0; sz < arrSize; ++sz) {
+        sum += x[sz];
+    }
+    return sum;
+}
+
+
+int main() {
+
+    float myArray[5] {3.8f,3.8f,3.8f,3.8f,3.8f};
+    auto num = ArraySum(myArray);
+    cout << "ArraySum:\t" << num << endl;
+
+    char myCharArray[] {"AB"};
+    auto charNum = ArraySum(myCharArray);
+    cout << "ArraySum:\t" << charNum << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+*** Max Template : Return the largest element in the array 
+
+/int Max(const int *pArr, size_t arrSize)/
+
+#+LATEX: \captionof{listing}{Returns the largest element in the array}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+T Max(T *x, size_t arrSize) {
+    T max = x[0];
+    for(size_t sz = 1; sz < arrSize; ++sz) {
+        max = max < x[sz] ? x[sz] : max;
+    }
+    return max;
+}
+
+int main() {
+
+    size_t sz = 5;
+    float myArray[5] {1.8f,5.8f,7.8f,4.8f,3.8f};
+
+    auto num = Max(myArray, sz);
+    cout << "Max:\t" << num << endl;
+
+    return 0;
+}
+#+END_SRC
+
+*** MinMax Template: Return the smallest and largest element in a pair
+
+/std::pair<int,int> MinMax(const int *pArr, size_t arrSize)/
+
+#+LATEX: \captionof{listing}{Return the smallest and largest element in a pair}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+pair<T,T> MinMax(T *x, size_t arrSize) {
+    T max = x[0];
+    for(size_t sz = 1; sz < arrSize; ++sz) {
+        max = max < x[sz] ? x[sz] : max;
+    }
+    T min = x[0];
+    for(size_t sz = 1; sz < arrSize; ++sz) {
+        min = min > x[sz] ? x[sz] : min;
+    }
+    return pair<T,T>(min,max);
+}
+
+int main() {
+
+    size_t sz = 5;
+    float myArray[5] {1.8f,5.8f,7.8f,4.8f,3.8f};
+
+    auto num = MinMax(myArray, sz);
+    cout << "Min:" << num.first << ", Max:" << num.second << endl;
+
+    return 0;
+}
+#+END_SRC
+
+  
+
+
+** Integer Class
+
+#+LATEX: \captionof{listing}{Integer Class Declaration}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/inc/integer.h :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+class Integer {
+    int *m_pInt;
+public:
+    Integer();                                  // Default constructor
+    Integer(int value);                         // Parameterized constructor
+    Integer(const Integer &obj);                // Copy constructor
+    Integer(Integer &&obj);                     // Move constructor
+    int GetValue()const;
+    void SetValue(int value);
+    ~Integer();
+    Integer & operator ++();                    // pre-increment operator
+    Integer operator ++(int);                   // post-increment operator
+    bool operator ==(const Integer &a)const;    // comparison
+    Integer & operator =(const Integer &a);     // Copy assignment
+    Integer & operator =(Integer &&a);          // Move assignment
+    Integer operator +(const Integer & a)const; // + operator
+
+    void operator ()();                         // Function Call Operator
+    explicit operator int();                    // Type Conversion Operator
+
+    // operator >> is decalred as friend of Integer Class
+    friend std::istream & operator >> (std::istream &input, Integer &a);
+};
+Integer operator +(int x, const Integer &y);
+std::ostream & operator <<(std::ostream & out, const Integer &a);
+std::istream & operator >> (std::istream &input, Integer &a);
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Constructors}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "integer.h"
+#include <iostream>
+
+using namespace std;
+
+Integer::Integer() {                           // standard constructor
+    cout << "Integer()" << endl;
+    m_pInt = new int(0);
+}
+
+Integer::Integer(int value) {                  // paramterizied constructor
+    cout << "Integer(int)" << endl;
+    m_pInt = new int(value);
+}
+
+Integer::Integer(const Integer & obj) {        // copy constructor
+    cout << "Integer(const Integer&)" << endl;
+    m_pInt = new int(*obj.m_pInt);
+}
+
+Integer::Integer(Integer && obj) {             // move constructor  
+    cout << "Integer(int&&)" << endl;
+    m_pInt = obj.m_pInt;
+    obj.m_pInt = nullptr;
+}
+
+Integer::~Integer() {                        // destructor
+    cout << "~Integer()" << endl;
+    delete m_pInt;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Setter and Getter}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+
+  int Integer::GetValue() const {
+    return *m_pInt;
+  }
+
+  void Integer::SetValue(int value) {
+    *m_pInt = value;
+  }
+  #+END_SRC
+
+
+#+LATEX: \captionof{listing}{Integer Class Definition: Operator Overlaoding member functiosn}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+Integer & Integer::operator++() { // ++a means a.operator++()
+    cout << "operator++()" << endl;
+    ++(*m_pInt);
+    return *this;  // the value a the address of this
+}
+
+Integer Integer::operator++(int) { // a++ means a.operator++(int)
+    cout << "operator++(int)" << endl;
+    Integer temp(*this);
+    ++(*m_pInt);
+    return temp;
+}
+
+bool Integer::operator==(const Integer & a) const { // c==a means c.operator==(a)
+    cout << "operator==(const Integer &) const" << endl;
+    return *m_pInt == *a.m_pInt;
+}
+
+Integer & Integer::operator=(const Integer & a) { // c=a means c.operator=(a)
+    cout << "operator=(const Integer &) const" << endl;
+    if (this != &a) {            // check for self assignemnt
+    delete m_pInt;
+    m_pInt = new int(*a.m_pInt);
+    }
+    return *this;
+}
+
+Integer & Integer::operator=(Integer && a) { // c=&&a means c.operator=(&&a)
+    cout << "operator=(Integer &&) const" << endl;
+    if (this != &a) {
+    delete m_pInt;
+    m_pInt = a.m_pInt;
+    a.m_pInt = nullptr;
+    }
+    return *this;
+}
+
+Integer Integer::operator+(const Integer & a) const { // c+a means c.operator+(a)
+    cout << "operator+(const Integer &) const" << endl;
+    Integer temp;
+    *temp.m_pInt = *m_pInt + *a.m_pInt; // *this->m_pInt
+    return temp;
+}
+
+void Integer::operator()() {
+    // cout << "operator()()" << endl;
+    cout << *m_pInt << endl; 
+}
+#+END_SRC
+  
+#+LATEX: \captionof{listing}{Integer Class Definition: Global Operator overloading}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/src/integer.cpp :mkdirp yes :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+Integer operator +(int x, const Integer &y) {
+    // cout << "operator+(int, const Integer)" << endl;
+    Integer temp;
+    temp.SetValue(x + y.GetValue());
+    return temp;
+}
+ostream & operator <<(ostream & out, const Integer &a) {
+    // cout << "operator <<(ostream &, const Integer &)" << endl;
+    out << a.GetValue();
+    return out;
+}
+istream & operator >> (istream &input, Integer &a) {
+    // cout << "operator >>(istream &, Integer &)" << endl;
+    int x;
+    input >> x;
+    // a.SetValue(x);  // SetValue() allows copy by value, no friend required
+    *a.m_pInt = x;     // access to private member of Integer Class.    
+    return input;
+}
+#+END_SRC
+
+
+
+** Perfect Forwarding - Part I (C++11)
+
+#+LATEX: \captionof{listing}{Perfect Forwarding  }
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/Integer-01/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Employee {
+    string m_Name;
+    Integer m_Id;
+
+public:
+    Employee(const string &name, const Integer &id) :
+        m_Name { name },
+        m_Id { id } {
+        cout << "Employee(const string &, const Integer &)" << endl;
+    }
+    Employee(string &&name, Integer &&id) :
+        m_Name { name },
+        m_Id { move(id) } {
+        cout << "Employee(string &&, Integer &&)" << endl;
+    }
+};
+
+int main() {
+
+    Employee emp1 { "christian", 63 };
+
+    int val {100};
+    Employee emp2 { "christian", val };
+    
+    string name {"christian"};
+    Employee emp3 { name, 63 };
+
+    Employee emp4 { name, val };
+
+
+    // we needed to implement 4 constructors !!!
+    
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-12/Integer/Integer-01/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-12/Integer/Integer-01/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+: ./app
+: Integer(int)
+: Integer(const Integer&)
+: Employee(const string &, const Integer &)
+: ~Integer()
+: ~Integer()
+
+
+#+LATEX: \captionof{listing}{Perfect Forwarding  - Member Template}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/Integer-02/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Employee {
+    string m_Name;
+    Integer m_Id;
+
+public:
+    template<typename T1, typename T2>
+    Employee(T1 &&name, T2 &&id) :
+        m_Name { name },
+        m_Id { id } {
+        cout << "Employee(T1 &&, T2 &&)" << endl;
+    }
+};
+
+int main() {
+
+    cout << "Constructor Calls:" << endl;
+    cout << "---------- emp 1 -------------" << endl;
+    Employee emp1 { "christian", 63 };
+    cout << "---------- emp 3 -------------" << endl;
+    int val {100};
+    Employee emp2 { "christian", val };
+    cout << "---------- emp 3 -------------" << endl;
+    string name {"christian"};
+    Employee emp3 { name, 63 }; 
+    cout << "---------- emp 4 -------------" << endl;
+    Employee emp4 { name, val };
+
+    cout << endl;
+    cout << "Value Type Presevation Required:" << endl;
+    cout << "---------- emp 5 -------------" << endl;
+
+    cout << endl;
+    cout << "-------- Destructor ----------" << endl;
+    
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-12/Integer/Integer-02/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-12/Integer/Integer-02/ :exports results :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+---------- emp 1 -------------
+Integer(int)
+Employee(T1 &&, T2 &&)
+---------- emp 3 -------------
+Integer(int)
+Employee(T1 &&, T2 &&)
+---------- emp 3 -------------
+Integer(int)
+Employee(T1 &&, T2 &&)
+---------- emp 4 -------------
+Integer(int)
+Employee(T1 &&, T2 &&)
+---------- emp 5 -------------
+Integer(int)
+Integer(const Integer&)
+Employee(T1 &&, T2 &&)
+~Integer()
+-------- Destructor ----------
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+~Integer()
+#+end_example
+
+
+
+
+** Perfect Forwarding - Part II (C++11)
+
+- /foreward<T>() Function>/ is defined in the /<utility>/ header
+
+#+LATEX: \captionof{listing}{Perfect Forwarding  - Member Template}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/Integer-03/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Employee {
+    string m_Name;
+    Integer m_Id;
+
+public:
+    template<typename T1, typename T2>
+    Employee(T1 &&name, T2 &&id) :
+        m_Name { forward<T1>(name) },     // preserve value type T1 
+        m_Id   { forward<T2>(id)   } {    // prseerve value type T2
+        cout << "Employee(T1 &&, T2 &&)" << endl;
+    }
+};
+
+template<typename T1, typename T2>
+Employee *Create(T1 &&a, T2 &&b) {
+    return new Employee(forward<T1>(a), forward<T2>(b));
+}
+
+int main() {
+
+    int val {100};
+    string name {"christian"};
+    
+    cout << "Value Type Presevation Required:" << endl;
+    cout << "---------- emp 5 -------------" << endl;
+    Employee emp5 { "christian", Integer {63} };
+    cout << "---------- emp 6 -------------" << endl;
+    Employee emp6 { string {"christian"}, val };
+
+    cout << endl;
+    cout << "Factroy Class:" << endl;
+    cout << "---------- emp 7 -------------" << endl;
+    auto emp7 = Create( "christian", Integer {63} );
+
+    cout << endl;
+    cout << "-------- Destructor ----------" << endl;
+
+    (void)emp7;
+    return 0;
+}
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle ../projects/section-12/Integer/Integer-03/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-12/Integer/Integer-03/ :exports results :results output
+make run 
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+g++ -std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc src/main.cpp ../src/integer.cpp -o app
+./app
+Value Type Presevation Required:
+---------- emp 5 -------------
+Integer(int)
+Integer(int&&)
+Employee(T1 &&, T2 &&)
+~Integer()
+---------- emp 6 -------------
+Integer(int)
+Employee(T1 &&, T2 &&)
+
+Factroy Class:
+---------- emp 7 -------------
+Integer(int)
+Integer(int&&)
+Employee(T1 &&, T2 &&)
+~Integer()
+
+-------- Destructor ----------
+~Integer()
+~Integer()
+#+end_example
+
+
+
+
+** Variadic Templates - Part I (C++11)
+
+
+#+LATEX: \captionof{listing}{Arguments all of same type}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+template<typename T>
+void Print(initializer_list<T> args) {
+    for (const auto &x : args) {
+	cout << x << " " ;
+    }
+}
+
+int main() {
+
+    Print({ 1,2,3,4,5,6 });
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 1 2 3 4 5 6 
+
+
+
+#+LATEX: \captionof{listing}{Variadic Template: Various Argument Types}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+void Print() {                             // Base Case Function
+}
+
+template<typename T, typename...Params>    // Template parameter pack
+void Print(T a, Params... args) {          // Function parameter pack
+    Print(args...);                        // recursive call           
+
+}
+
+int main() {
+
+    Print( 1, 2.5, 3, "4" );
+
+    return 0;
+}
+
+/* Recursive Expansion
+   1. Print(1, 2.5, 3, "4") a=1,   args= 2.5, 3, "4"
+   2. Print(2.5, 3, "4")    a=2.5, args=3, "4"
+   3. Print(3, "4")         a=3,   args="4"
+   4. Print("4")            a="4", args=""
+   5. Print()               a="",  args=""
+*/
+#+END_SRC
+
+#+RESULTS:
+
+
+
+
+** Variadic Templates - Part II (C++11)
+
+
+#+LATEX: \captionof{listing}{Variadic Template: Various Argument Types}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+void Print() {                             // Base Case Function
+    cout << endl;
+}
+
+template<typename T, typename...Params>    // Template parameter pack
+void Print(T a, Params... args) {          // Function parameter pack
+    // cout << sizeof...(args) << ", " << sizeof...(Params) << endl;
+    cout << a;
+    if(sizeof...(args) != 0) {
+	cout << ", ";
+    }
+    Print(args...);                        // recursive call                        
+
+}
+
+int main() {
+
+    Print( 1, 2.5, 3, "4" );
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 1, 2.5, 3, 4
+
+
+#+LATEX: \captionof{listing}{Variadic Template: Pass by reference Type}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+void Print() {                                        // Base Case Function
+    cout << endl;
+}
+
+template<typename T, typename...Params>              // Template parameter pack
+void Print(const T &a, const Params&... args) {      // Function parameter pack
+    // cout << sizeof...(args) << ", " << sizeof...(Params) << endl;
+    cout << a;
+    if(sizeof...(args) != 0) {
+        cout << ", ";
+    }
+    Print(args...);                        // still pass by value                        
+
+}
+
+int main() {
+
+    Print( 1, 2.5, 3, "4" );
+
+    return 0;
+}
+#+END_SRC
+
+
+
+
+#+LATEX: \captionof{listing}{Variadic Template: Perfect Forewarding}
+#+BEGIN_SRC C++ :tangle ../projects/section-12/Integer/Integer-04/src/main.cpp :mkdirp yes: main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <integer.h>
+#include <iostream>
+
+using namespace std;
+
+void Print() {                             // Base Case Function
+    cout << endl;                          // recursion terminates here
+}
+
+template<typename T, typename...Params>    // Template parameter pack
+void Print(T &&a, Params&&... args) {      // Function parameter pack
+    // cout << sizeof...(args) << ", " << sizeof...(Params) << endl;
+    cout << a;
+    if(sizeof...(args) != 0) {
+        cout << ", ";
+    }
+    Print(forward<Params>(args)...);       // perfect forewarding         
+
+}
+
+int main() {
+
+    Integer val {1};
+    Print( 0, val, Integer {2} );
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC makefile :tangle ../projects/section-12/Integer/Integer-04/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -fno-elide-constructors -I../inc
+
+SRC=src/main.cpp ../src/integer.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+BEGIN_SRC shell :dir ../projects/section-12/Integer/Integer-04/ :exports results :results output
+make run 
+#+END_SRC
+
+#+RESULTS:
+: ./app
+: Integer(int)
+: Integer(int)
+: 0, 1, 2
+: ~Integer()
+: ~Integer()
+
+
+
+
+
+** Assignment IV
+
+
+
+** Class Templates
+
+#+LATEX: \captionof{listing}{Class Template: Stack for Int's}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+class Stack {
+
+    int m_Buffer[512];
+    int m_Top {-1};
+public:
+    void Push(int elem) {
+        m_Buffer[++m_Top] = elem;
+    }
+    void Pop() {
+        --m_Top;
+    }
+    int Top() const {
+        return m_Buffer[m_Top];
+    }
+    bool IsEmpty() {
+        return m_Top == -1;
+    }
+};
+
+int main() {
+
+    Stack s;
+    s.Push(3);
+    s.Push(1);
+    s.Push(6);
+    s.Push(9);
+
+    while (!s.IsEmpty()) {
+        cout << s.Top() << " ";
+        s.Pop();
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 9 6 1 3 
+
+
+#+LATEX: \captionof{listing}{Class Template: Stack Template}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+template<typename T, int size> // not template type argumetn
+class Stack {
+
+    T m_Buffer[size];
+    int m_Top {-1};
+public:
+    Stack() = default;
+    Stack(const Stack &obj) {
+        m_Top = obj.m_Top;
+        for(int i=0; i <= m_Top; ++i) {
+            m_Buffer[i] = obj.m_Buffer[i];
+        }
+    }
+    void Push(const T &elem) {
+        m_Buffer[++m_Top] = elem;
+    }
+    void Pop();
+    
+    const T& Top() const {
+        return m_Buffer[m_Top];
+    }
+    bool IsEmpty() {
+        return m_Top == -1;
+    }
+    static Stack Create();
+};
+
+// Template parameters are part of the type of the function
+template<typename T, int size>
+void Stack<T, size>::Pop() {
+    --m_Top;
+}
+
+template<typename T, int size>
+Stack<T, size> Stack<T, size>::Create() {
+    return Stack<T, size>();
+}
+
+
+
+
+int main() {
+    // Template parameters are part of the type of the class
+    Stack<float, 10> s = Stack<float, 10>::Create();          
+    // Class instantion only for type which are invoked
+    s.Push(3);
+    s.Push(1);
+    s.Push(6);
+    s.Push(9);
+
+    auto s2(s);
+    while (!s2.IsEmpty()) {
+        cout << s2.Top() << " ";
+        s2.Pop();
+    }
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 9 6 1 3 
+
+
+
+** Class Template Explicit Specialization - Part I
+
+- all of the template are specialised
+
+#+LATEX: \captionof{listing}{Class Template: Pretty Printer}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+template<typename T>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+int main() {
+
+    int data = 5;
+    float f = 8.2f;
+
+    PrettyPrinter<int> p1(&data);
+    p1.Print();
+    PrettyPrinter<float> p2(&f);
+    p2.Print();
+
+    // Prints the first char only
+    const char *p{"Hello World"};
+    PrettyPrinter<const char> p3(p);
+    p3.Print();
+    const char *pData = p3.GetData();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: {5}
+: {8.2}
+: {H}
+
+
+#+LATEX: \captionof{listing}{Class Template: Pretty Printer Explicite Spezialisation for char*}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+template<typename T>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+// Explicite Specialisation for const char
+template<>                                
+class PrettyPrinter<const char*> {
+    const char * m_pData;
+public:
+    PrettyPrinter(const char * data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << m_pData << "}" << endl;
+    }
+
+    const char* GetData() {
+        return m_pData;
+    }
+};
+
+int main() {
+
+    const char *p{"Hello World"};
+    PrettyPrinter<const char*> p3(p);
+    p3.Print();
+    const char *pData = p3.GetData();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: {Hello World}
+
+
+
+
+** Class Template Explicit Specialization - Part II
+
+#+LATEX: \captionof{listing}{Class Template: Pretty Printer with vector}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+template<typename T>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+// Explicite Specialisation for const char
+template<>                                
+class PrettyPrinter<const char*> {
+    const char * m_pData;
+public:
+    PrettyPrinter(const char * data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << m_pData << "}" << endl;
+    }
+
+    const char* GetData() {
+        return m_pData;
+    }
+};
+
+// Explicite Specialisation for vector
+template<>                                
+class PrettyPrinter<vector<int>> {
+    vector<int> *m_pData;
+public:
+    PrettyPrinter(vector<int> * data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{";
+        for(const auto &x : * m_pData) {
+            cout << x << ", ";
+        }
+        cout << "}" << endl;
+    }
+
+    vector<int>* GetData() {
+        return m_pData;
+    }
+};
+
+
+int main() {
+
+    int data = 5;
+    float f = 8.2f;
+
+    PrettyPrinter<int> p1(&data);
+    p1.Print();
+    PrettyPrinter<float> p2(&f);
+    p2.Print();
+
+    const char *p{"Hello World"};
+    PrettyPrinter<const char*> p3(p);
+    p3.Print();
+    const char *pData = p3.GetData();
+
+    vector<int> v{1,2,3};
+    PrettyPrinter<vector<int> > p4(&v);
+    p4.Print();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: {5}
+: {8.2}
+: {Hello World}
+: {1, 2, 3, }
+
+
+#+LATEX: \captionof{listing}{Class Template: Pretty Printer with Specialisation of Print Function}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+template<typename T>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+// Explicite Specialisation for const char
+template<>                                
+class PrettyPrinter<const char*> {
+    const char * m_pData;
+public:
+    PrettyPrinter(const char * data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << m_pData << "}" << endl;
+    }
+
+    const char* GetData() {
+        return m_pData;
+    }
+};
+
+// Print() Function Explicite Specialisatio 
+template<>
+void PrettyPrinter<vector<int> >::Print() {
+    cout << "{";
+    for(const auto &x : * m_pData) {
+        cout << x << ", ";
+    }
+    cout << "}" << endl;
+}
+int main() {
+
+    int data = 5;
+    float f = 8.2f;
+
+    PrettyPrinter<int> p1(&data);
+    p1.Print();
+    PrettyPrinter<float> p2(&f);
+    p2.Print();
+
+    const char *p{"Hello World"};
+    PrettyPrinter<const char*> p3(p);
+    p3.Print();
+    const char *pData = p3.GetData();
+
+    vector<int> v1{1,2,3};
+    PrettyPrinter<vector<int> > p4(&v1);
+    p4.Print();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: {5}
+: {8.2}
+: {Hello World}
+: {1, 2, 3, }
+
+
+
+
+** Assignment
+
+#+LATEX: \captionof{listing}{Specialisation for vector<vector<int>>}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+template<typename T>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+
+// Explicite Specialisation for vector<vector<int>>
+template<>                                
+class PrettyPrinter<vector<vector<int>>> {
+    vector<vector<int>> *m_pData;
+public:
+    PrettyPrinter(vector<vector<int>> * data) : m_pData(data) {
+    }
+    void Print() {
+
+        for(const auto& row : * m_pData) {
+            cout << "{";
+            for(const auto& x : row) {
+                cout << x << ", ";
+            }
+            cout << "}" << endl;
+        }
+        cout << endl;
+    }
+
+    vector<vector<int>>* GetData() {
+        return m_pData;
+    }
+};
+
+
+int main() {
+
+    vector<vector<int>> v2{{1,2,3}, {4,5,6}};
+    
+    PrettyPrinter<vector<vector<int>>> p5(&v2);
+    p5.Print();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: {1, 2, 3, }
+: {4, 5, 6, }
+: 
+
+
+#+LATEX: \captionof{listing}{Function Print() Explicite Specialisation for vector<vector<int>>}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+template<typename T>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+// Function Print Explicite Specialisation for vector<vector<int>>
+template<>
+void PrettyPrinter<vector<vector<int>>>::Print() {
+    for(const auto& row : * m_pData) {
+        cout << "{";
+        for(const auto& x : row) {
+            cout << x << ", ";
+        }
+        cout << "}" << endl;
+    }
+    cout << endl;
+}
+int main() {
+
+    vector<vector<int>> v2{{1,2,3}, {4,5,6}};
+    
+    PrettyPrinter<vector<vector<int>>> p5(&v2);
+    p5.Print();
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: {1, 2, 3, }
+: {4, 5, 6, }
+: 
+
+
+
+** Class Template Partial Specializuation
+- only some of the template parameter are specialized
+
+
+#+LATEX: \captionof{listing}{Class Template: Pretty Printer}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+template<typename T, int columns>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "Columns: " << columns << endl;
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+template<typename T>
+class PrettyPrinter<T, 80> {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "Using 80 Columns: " << endl;
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+int main() {
+
+    int data = 800;
+
+    PrettyPrinter<int, 80> p{&data};
+    p.Print();
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Using 80 Columns: 
+: {800}
+
+
+
+#+LATEX: \captionof{listing}{Class Template: Pretty Printer}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+template<typename T, int columns>
+class PrettyPrinter {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "Columns: " << columns << endl;
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+template<typename T>
+class PrettyPrinter<T, 80> {
+    T * m_pData;
+public:
+    PrettyPrinter(T *data) : m_pData(data) {
+    }
+    void Print() {
+        cout << "Using 80 Columns: " << endl;
+        cout << "{" << *m_pData << "}" << endl;
+    }
+
+    T * GetData() {
+        return m_pData;
+    }
+};
+
+template<typename T>
+class SmartPointer {
+    T *m_ptr;
+public:
+    SmartPointer(T *ptr) : m_ptr(ptr) {
+    }
+    T * operator ->() {
+        return m_ptr;
+    }
+
+    T & operator *() {
+        return *m_ptr;
+    }
+    ~SmartPointer() {
+        delete m_ptr;
+    }
+};
+
+template<typename T>
+class SmartPointer<T[]> {
+    T *m_ptr;
+public:
+    SmartPointer(T *ptr) : m_ptr(ptr) {
+    }
+    T & operator [](int index) {
+        return m_ptr[index];
+    }
+    ~SmartPointer() {
+        delete[] m_ptr;
+    }
+};
+
+
+
+int main() {
+
+    int data = 800;
+
+    PrettyPrinter<int, 80> p{&data};
+    p.Print();
+    SmartPointer<int[]> s1 {new int[5] };
+    s1[0] = 5;
+    cout << s1[0] << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Using 80 Columns: 
+: {800}
+: 5
+
+
+
+
+** TODO Typedef, Type Alias & Alias Templates (C++11)
+
+
+** Type Traits (C++11)
+
+
+- C++ does not have any support for introspection at runtime, C++11
+  introduced tpye traits
+- Tpye traits give the ability to introspect
+  - find characteristics of types at compile time
+  - transform the properties of the type
+- Useful in template metaprogramming
+- Will either return a boolean or a type when inspecting types
+- Provides template-based interface and defined in header /<type_traits>/
+- Some traits require support from the compiler
+  - compiler provides intrinsics for such traits
+
+*** Type Traits
+
+| is_void           | C++11 | checks if a type is void                   |
+| is_null_pointer   | C++14 | checks if a type is std::nullptr           |
+| is_integral       | C++11 | checks if a type is an integral            |
+| is floating_point | C++11 | checks if a type is floating-point type    |
+| is_array          | C++11 | checks if a type is an array type          |
+| is_enum           | C++11 | checks if a type is emumeration type       |
+| is_union          | C++11 | checks if a type is union type             |
+| is_class          | C++11 | checks if a type is a non-union class type |
+| is_function       | C++11 | checks if a type is a function             |
+| is_pointer        | C++11 | checks if a type is pointer type                              |
+
+#+LATEX: \captionof{listing}{Traits Example - Runtime Checks}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <type_traits>
+
+using namespace std;
+
+template<typename T>
+T Divide(T a, T b) {
+    if(is_floating_point<T>::value == false) {
+	cout << "Use floating point types only! ";
+	return 0;
+    }
+    return a/b;
+}
+
+template<typename T>
+void Check(T&&) {
+    cout << boolalpha;
+    cout << "Is reference? " << is_reference<T>::value << endl;
+
+    cout
+	<< "After removing: "
+	<< is_reference<typename remove_reference<T>::type>::value << endl;
+}
+
+int main() {
+
+   cout
+       << std::boolalpha
+       << "Is Integer? " << is_integral<int>::value << endl;
+
+   cout << Divide(5.0f,2.0f) << endl;
+
+   Check(5);    // r-value
+   int val {};  // l-value
+   Check(val);
+   
+   return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Is Integer? true
+: 2.5
+: Is reference? false
+: After removing: false
+: Is reference? true
+: After removing: false
+
+
+
+
+
+** static_assert (C++11)
+
+- /static_assert/ is a new kind of declaration for evaluating expressions
+- Accepts an expression and a user defined message
+- Used for testing an expression at *compile time*
+- If the expression returns false; the compiler displays the specified
+  message and compilation fails.
+
+#+LATEX: \captionof{listing}{static-assert - Check Expression at Compile}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <type_traits>
+
+using namespace std;
+
+int main() {
+
+    // static_assert( sizeof(void*)==4, "Compile in 32-bit mode only");
+    static_assert( sizeof(void*)==8, "Compile in 64-bit mode only");
+
+    cout << "Code has been compiled successfully" << endl;
+   return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Code has been compiled successfully
+
+
+#+LATEX: \captionof{listing}{Traits Static Asserts - Compile Time Checks}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+#include <type_traits>
+
+using namespace std;
+
+template<typename T>
+T Divide(T a, T b) {
+
+    static_assert(is_floating_point<T>::value, "Only Floating Point Types supported");
+
+    return a/b;
+}
+
+int main() {
+
+   cout << Divide(5.0f,2.0f) << endl;
+   
+   return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 2.5
+
+
+*** not compile                                                  :noexport:
+#+ATTR_LATEX: :options {static_assert}
+#+BEGIN_infobox
+You can combine static_assert with other type traits to check for
+expressions at compile time.
+#+END_infobox

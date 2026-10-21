@@ -1,0 +1,149 @@
+#+TITLE: Modern C++ Notes
+#+AUTHOR: Christian Bollinger
+#+DATE: \today
+
+#+OPTIONS: ^:{} toc:2
+#+STARTUP: hideblocks
+
+#+PROPERTY: header-args :tangle yes
+#+PROPERTY: header-args :mkdirp yes
+#+PROPERTY: header-args :eval never-export
+#+PROPERTY: header-args:C++ :mkdirp yes :results output verbatim
+#+PROPERTY: header-args:cpp :exports code
+
+#+LaTeX_CLASS: koma-article
+#+LATEX_CLASS_OPTIONS: [fontsize=10,DIV=15]
+
+# Packages
+#+LATEX_HEADER: \usepackage{float}    % required for [H] placement specifier
+#+LATEX_HEADER: \usepackage{lipsum}
+#+LATEX_HEADER: \usepackage[tikz]{bclogo}
+# Minted
+#+LATEX_HEADER: \usepackage{caption}
+#+LATEX_HEADER: \setminted{fontsize=\small,numbers=left,bgcolor=dg_sand!20,breaklines=true,breakanywhere=true}
+# Colors
+#+LATEX_HEADER: \definecolor{dg_sand}{RGB}{191,182,159}
+#+LATEX_HEADER: \definecolor{dg_yellow}{RGB}{255,200,46}
+#+LATEX_HEADER: \definecolor{contiYellow}{RGB}{255,165,0}
+#+LATEX_HEADER: \definecolor{DG_BLUE}{cmyk}{1,.72,0,.38}
+#+LATEX_HEADER: \definecolor{light-gray}{HTML}{E5E4E2}
+#+LATEX_HEADER: \definecolor{light-cyan}{HTML}{E0FFFF}
+
+# -------------------------------------------------------------------------
+# Section formatting (KOMA-native)
+#+LATEX_HEADER: \setkomafont{section}{\color{dg_yellow}\bfseries\huge}
+#+LATEX_HEADER: \setkomafont{subsection}{\color{dg_yellow}\bfseries\Large}
+#+LATEX_HEADER: \setkomafont{subsubsection}{\color{DG_BLUE!80}\bfseries\large}
+
+# New Page before section
+#+LATEX_HEADER: \usepackage{etoolbox}
+#+LATEX_HEADER: \pretocmd{\section}{\clearpage}{}{}
+# -------------------------------------------------------------------------
+# Itemize formatting
+#+LATEX_HEADER: \usepackage{enumitem}
+#+LATEX_HEADER: \setlist[itemize]{font=\color{DG_BLUE}}
+
+# -------------------------------------------------------------------------
+# Header and Footer
+#+LATEX_HEADER: \usepackage{lastpage}  % must be loaded first
+#+LATEX_HEADER: \usepackage[headsepline=true,footsepline=true]{scrlayer-scrpage}
+#+LATEX_HEADER: \pagestyle{scrheadings}
+#+LATEX_HEADER: \automark{section}
+
+#+LATEX_HEADER: \ihead*{Modern C++}
+#+LATEX_HEADER: \ohead*{C++11/14/17}
+#+LATEX_HEADER: \ifoot*{\shortAuthors}
+#+LATEX_HEADER: \cfoot*{\thepage}
+#+LATEX_HEADER: \ofoot*{\today}
+
+# -------------------------------------------------------------------------
+# Suppress hyperref's /PageLabels rerun request (saves one xelatex pass)
+#+LATEX_HEADER: \hypersetup{pdfpagelabels=false}
+
+# -------------------------------------------------------------------------
+# Custom commands
+#+LATEX_HEADER: \newcommand{\versiondate}{\today}
+#+LATEX_HEADER: \newcommand{\firstAuthor}{Christian Bollinger}
+#+LATEX_HEADER: \newcommand{\shortAuthors}{Ch. Bollinger}
+#+LATEX_HEADER: \newcommand{\authorname}{\firstAuthor}
+
+# -------------------------------------------------------------------------
+# tcolorbox  environments — define style once, use by name with just {Title}
+# #+BEGIN_EXPORT latex
+# \newenvironment{infobox}[1]
+# {\begin{tcolorbox}[title=#1,colback=blue!5!white,colframe=blue!50!black]}
+# {\end{tcolorbox}}
+# 
+# \newenvironment{warningbox}[1]
+# {\begin{tcolorbox}[title=#1,colback=red!5!white,colframe=red!70!black]}
+# {\end{tcolorbox}}
+# 
+# \newenvironment{syntaxbox}[1]
+# {\begin{tcolorbox}[title=#1,colback=green!5!white,colframe=green!50!black]}
+# {\end{tcolorbox}}
+# #+END_EXPORT
+
+# -------------------------------------------------------------------------
+# bclogo box environments — define style once, use by name with just {Title}
+
+#+BEGIN_EXPORT latex
+\newenvironment{infobox}[1]
+{\begin{bclogo}[couleur=light-cyan,arrondi=0.1,logo=\bclampe,ombre=true]{#1}}{\end{bclogo}}
+\newenvironment{warningbox}[1]
+{\begin{bclogo}[couleur=dg_yellow!30,arrondi=0.1,logo=\bcattention,ombre=true]{#1}}{\end{bclogo}}
+\newenvironment{syntaxbox}[1]
+{\begin{bclogo}[couleur=light-gray,arrondi=0.1,logo=\bcbook,ombre=true]{#1}}{\end{bclogo}}
+#+END_EXPORT
+
+# -------------------------------------------------------------------------
+# Paragraph formatting
+#+LATEX_HEADER: \setlength{\parindent}{0em}  % No indentation
+# -------------------------------------------------------------------------
+
+
+\newpage
+
+
+#+INCLUDE: "chapters/01-introduction.org" :minlevel 1
+#+INCLUDE: "chapters/02-basic-language-facilities.org" :minlevel 1
+#+INCLUDE: "chapters/03-memory-management.org" :minlevel 1
+#+INCLUDE: "chapters/04-class-objects.org" :minlevel 1
+#+INCLUDE: "chapters/05-move-semantic.org" :minlevel 1
+#+INCLUDE: "chapters/06-operator-overloading.org" :minlevel 1
+#+INCLUDE: "chapters/07-memory-management.org" :minlevel 1
+#+INCLUDE: "chapters/08-more-cpp-goodies.org" :minlevel 1
+#+INCLUDE: "chapters/09-object-oriented-programming.org" :minlevel 1
+#+INCLUDE: "chapters/10-exception-handling.org" :minlevel 1
+#+INCLUDE: "chapters/11-file-io.org" :minlevel 1
+#+INCLUDE: "chapters/12-Templates.org" :minlevel 1
+#+INCLUDE: "chapters/13-lambdas.org" :minlevel 1
+#+INCLUDE: "chapters/14-function-wrappers.org" :minlevel 1
+#+INCLUDE: "chapters/15-standard-template-library.org" :minlevel 1
+#+INCLUDE: "chapters/16-c++-concurrency.org" :minlevel 1
+#+INCLUDE: "chapters/17-c++17-core-language-features.org" :minlevel 1
+#+INCLUDE: "chapters/18-c++17-template-features.org" :minlevel 1
+#+INCLUDE: "chapters/19-c++17-standard-library-components.org" :minlevel 1
+
+#+INCLUDE: "chapters/a-used-compiler-flags.org"
+#+INCLUDE: "chapters/b-org-mode-simulate-keyboard-input.org"
+#+INCLUDE: "chapters/c-document-setup-improvements.org"
+#+INCLUDE: "chapters/d-cpp-libraries.org"
+
+
+
+* COMMENT Debugging
+
+latexmk -C modern-cpp.tex
+rm -f modern-cpp.aux modern-cpp.out modern-cpp.toc modern-cpp.xdv modern-cpp.pdf
+rm -rf _minted*
+latexmk -xelatex modern-cpp.tex
+xelatex -shell-escape -halt-on-error modern-cpp.tex
+
+
+* COMMENT Document modifications
+
+- remove all ATTR_LATEX: placement [H] : find . -name "*.org" -exec sed -i '/^#+ATTR_LATEX: :placement/d' {} +
+  test: grep -R "^#+ATTR_LATEX: :placement" . 
+- From Caption generate centerd text: find . -name "*.org" -exec sed -i 's/^#+CAPTION: \(.*\)$/\/*\1*\//' {} +
+- #+LATEX: \captionof{listing}{Hello World}: find . -name "*.org" -exec sed -i 's/^#+CAPTION: \(.*\)$/#+LATEX: \\captionof{listing}{\1}/' {} +
+  test: grep -R "^#+CAPTION . 

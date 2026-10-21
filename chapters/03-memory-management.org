@@ -1,0 +1,305 @@
+* Memory Management - Part I
+
+** Dynamic Memory Allocation Part I (malloc function)
+
+- C/C++ programs are provided with different types of memory areas
+  - *stack* - allocated automatically for local variables
+  - *data section* - allocated for global and static data
+  - *heap* - allocated at runtime
+- All the memory is taken from the process address space
+- C/C++ programs provide support for memory allocation at runtime
+  (also called dynmic memory)
+- Allocations on the heap have to be managed by the *programmer*
+- Stack and data section allocations are managed by the *runtime*
+
+*** Dynamic Memory Allocation in C
+- C provides various functions for allocating memory from the heap
+  - /malloc/: allocate raw memory on the heap
+  - /calloc/: allocates memory on the heap and initializes it to zero
+  - /realloc/: allocates larger chunk of memory for an existing allocation
+  - /free/: deallocates/releases the memory allocated through the above
+    functions
+    
+
+#+LATEX: \captionof{listing}{malloc/calloc with gcc}
+#+BEGIN_SRC C :flags "-Wall -Wextra" :exports both :results output verbatim :padline no
+#include <stdio.h>
+#include <stdlib.h>  // declaration of memory allocation function
+
+int main() {
+
+    // single element not initialzied memory
+    int *p1 = malloc(sizeof(int));      // single element
+    if(p1 == NULL) {
+        printf("Failed to allocate memory\n");
+        return -1;
+    }
+    ,*p1 = 5;
+    printf("*p1=%d\n", *p1);
+    free(p1);       // no memory leak
+    p1 = NULL;      // no dangling pointer
+        
+    // array of 5 ints not initilized
+    int *a1 = malloc(5*sizeof(int));  // 5 elements
+    if(a1 == NULL) {
+        printf("Failed to allocate memory\n");
+        return -1;
+    }
+    a1[0] = 10;
+    a1[1] = 20;
+    printf("a1[0]=%d, a1[1]=%d, a1[2]\n", a1[0], a1[1]);
+    free(a1);     // no memory leak             
+    a1 = NULL;    // no dangling pointer
+
+          
+    // array of 5 ints initialized to 0
+    int *a2 = calloc(5, sizeof(int));  // 5 elements
+    if(a2 == NULL) {
+        printf("Failed to allocate memory\n");
+        return -1;
+    }
+    a2[0] = 10;
+    a2[1] = 20;
+    printf("a2[0]=%d, a2[1]=%d, a2[3]=%d, a2[3]=%d, a2[4]=%d\n", \
+           a2[0], a2[1], a2[2], a2[3], a2[4]);
+    free(a2);     // no memory leak             
+    a2 = NULL;    // no dangling pointer
+
+        
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: *p1: 5
+: a1[0]: 10, a1[1]: 20, a1[2]: 0, a1[3]: 0, a1[4]: 0
+: a2[0]: 10, a2[1]: 20, a2[3]: 0, a2[3]: 0, a2[4]: 0
+
+
+#+ATTR_LATEX: :options {Important}
+#+BEGIN_infobox
+When allocation memory with /malloc/, /calloc/ or /realloc/ then:
+- check the return type is not NULL
+- free the memory when not used anymore - avoid *memory leak*
+- set pointer to NULL after freeing - otherwise we have a *dangling* pointer
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{malloc with g++}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <stdio.h>
+#include <stdlib.h>  // declaration of memory allocation function
+
+int main() {
+      
+    int *p = (int*) malloc(sizeof(int));
+    if(p == NULL) {
+        printf("Failed to allocate memory\n");
+        return -1;
+    }
+
+    *p = 5;
+    printf("%d", *p);
+    free(p);     // no dangling pointer
+    p = NULL;    // no dangling pointer
+      
+    return 0;
+}
+#+END_SRC
+
+#+ATTR_LATEX: :options {gcc vs c++}
+#+BEGIN_infobox
+/malloc/ returns a void pointer and if compiling this code with a c++
+compiler you have to explicitly perform a cast between void pointer to
+the target pointer type.
+#+END_infobox
+
+
+** Dynamic Memory Allocation Part II (new operator)
+
+- C++ provides two operators for dynamic memory allocation
+- /new/: allocated memory on the heap
+- /delete/: deallocates memory
+- Memory that is allocated through /new/ has to be released with /delete/
+
+#+LATEX: \captionof{listing}{new operator}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+      
+    int *p = new int(7);
+    *p = 5;
+    cout << "address=" << p << " value="<< *p << endl;
+    delete p;       
+    p = nullptr;   // no dangling pointer
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: address=0x247a8020 value=5
+
+
+#+ATTR_LATEX: :options {Syntax}
+#+BEGIN_syntaxbox
+<type> *<variable> = new <type>(optiona args);
+delete <variable>;
+
+int *p = new int(value);
+delete p;
+#+END_syntaxbox
+
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>                                              | <40>                                  |
+| *malloc*                                            | *new*                                   |
+|---------------------------------------------------+---------------------------------------|
+| Function                                          | Operator                              |
+| Requires size during allocation                   | Size is ascertained from the type     |
+| Cannot initialize memory                          | Can initialize memory                 |
+| Cannot call constructors                          | Can call constructors                 |
+| Retruns void pointer that needs to be type casted | Return correct type of pointer        |
+| Cannot be customized                              | Can be customized through overloading |
+| malloc, calloc, realloc                           | has different formss                  |
+| Return NULL on failure                            | Throws exception on failure           |
+
+
+
+
+
+** Dynamic Memory Allocation Part III (new[] operator)
+
+*** new For Arrays
+- Another form of new
+- Used for allocating dynamic arrays
+- Written as new[]
+- Susbequentyl, use delete[] for releasing the memory
+
+#+ATTR_LATEX: :options {Syntax}
+#+BEGIN_syntaxbox
+/<type> *<variable> = new <type>[size];/
+/delete [] <variable>;/
+
+/int *p = new int[5];/  //// Allocate memory for 5 integers
+/delete []p;/           //note the usage of
+#+END_syntaxbox
+
+
+#+LATEX: \captionof{listing}{new for Arrays}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string.h>
+#include <iostream>
+
+void NewArrays() {
+
+    using namespace std;
+          
+    int *p = new int[5]{0,1,2,3,4} ;
+    for(int i=0; i<5; i++) {
+        cout << p[i] << ", ";
+    }
+    cout << endl;
+    delete []p;
+}
+
+void Strings() {
+    using namespace std;
+
+    char *p = new char[4]; // allocate 1 charachter for null terminate char.
+    strcpy(p, "C++");
+    cout << p << endl;
+    delete []p;
+}
+
+int main() {
+    NewArrays();
+    Strings();
+          
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 0, 1, 2, 3, 4, 
+: C++
+ 
+
+** Dynamic Memory Allocation Part IV (2D arrays)
+
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string.h>
+#include <iostream>
+
+void TwoDArray() {
+    using namespace std;
+
+    int *p1 = new int[3] {1,2,3};  // 1. row
+    int *p2 = new int[3] {4,5,6};  // 2. row
+      
+    int **pData = new int *[2];    // array of pointers
+
+    pData[0] = p1;
+    pData[1] = p2;
+
+    for(int i=0; i<2; i++) {
+        for(int j=0; j<3; j++) {
+
+            cout << pData[i][j] << ", ";
+        }
+        cout << endl; // end of columns
+    }
+    cout << endl;  // end of rows
+
+    // delete the memory poiners in the same sequence as the have been allocated:
+    // 1. delete the row pointers
+    // 2. delete the memory of the array of pointers
+    delete[]p1; // delete []pdata[0]
+    delete[]p2; // delete []pdata[1]
+
+    delete [] pData;
+}
+
+
+int main() {
+    using namespace std;
+    // first index represents the row
+    // second index represents the column
+    int data[2][3] = {  
+        1,2,3,   // first row
+        4,5,6    // second row
+    }; //1,2,3,4,5,6        
+
+    for(int i=0; i<2; i++) {
+        for(int j=0; j<3; j++) {
+
+            cout << data[i][j] << ", ";
+        }
+        cout << endl; // end of columns
+    }
+    cout << endl;  // end of rows
+    
+    TwoDArray();
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 1, 2, 3, 
+: 4, 5, 6, 
+: 
+: 1, 2, 3, 
+: 4, 5, 6, 
+: 
+
+
+#+ATTR_LATEX: :options {Remember}
+#+BEGIN_infobox
+The number of delete calls should match the numbers of new calls!
+#+END_infobox
+
+

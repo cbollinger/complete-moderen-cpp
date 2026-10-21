@@ -1,0 +1,1562 @@
+* Basic Language Facilities
+
+** What is C++
+
+- imperative programming
+- oop programming
+- generic programming
+
+*Modern C++ >= std=C++11*
+- Move - Smart Pointers -> now need to use raw pointers
+- Automatic type infernce
+- Threading
+- Lambda functions
+- ....
+
+
+** First C++ Program
+
+#+LATEX: \captionof{listing}{Hello World}
+#+BEGIN_SRC C++ :flags "-std=c++17" :exports both :results output verbatim
+#include <iostream>
+
+int main() {
+    using namespace std;
+    cout << "Hello " << "C++" << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Hello C++
+
+- endl is a so called *manipulator*
+
+
+** C++ Compilation Process
+
+- *Preprocessing*
+  - statements beginning with # are processed
+  - include statements get replaced with file content
+  - macros are expanded
+- *Compilation*
+  - code is checked for correct syntax
+  - converted into object code
+- *Linking*
+  - the object code is linked with standard libraries
+- *The output of linking is the executable file*
+
+** Primitive Types & Variables
+
+*Primitive Types*
+- Arithmetic & void
+- Arithmetic -> integral & floating point
+- Integral types: bool, char, wchar_t, char16_t, char_32_t, short, int, long
+- Floating point: float, double
+- void is a special type used with pointers & functions
+
+*Type Modifiers*
+- *modifiers:* singed, unsigned, short, long
+- *qualifiers*: const, volatile, static
+- *memory requirement:* may change with the platform (CPU)
+- *range* minimum and maximum value a type can hold
+  - *<climits>* e.g. /INT_MIN/ and /INT_MAX/
+  - *<cfloat>* e.g. /DBL_MIN/ and /DBL_MAX/
+
+*Variable Declaration*
+- varibale declaration: name followed by type e.g. /int i/ or /float x/
+- variable is also called *identifier*
+- Use *initializer* to initialize a variable
+- Uninitialized variables contain *chunk value*
+
+#+LATEX: \captionof{listing}{Uninitialized Variable}
+#+BEGIN_SRC C++ :includes '(<iostream> <vector>) :var LANG="C" :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+using namespace std;
+int main() {
+    int i;
+    cout << i;
+}
+#+END_SRC
+
+#+RESULTS:
+: 32548
+In function »int main()«:
+Warnung: »i« ist nicht initialisiert, wird aber benutzt [-Wuninitialized]
+12 |     cout << i;
+Anmerkung: »i« wurde hier deklariert
+11 |     int i;
+
+
+#+LATEX: \captionof{listing}{Initializing Variables}
+#+BEGIN_SRC C++ :includes '(<iostream> <vector>) :var LANG="C" :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+using namespace std;
+int main() {
+    // Scalar Types
+    int i=0;
+    cout << i;
+
+    float f = 1.283f;
+    double d = 521.23;
+
+    //Vector Types
+    int arr[5]; // uninitialized
+    int arr[5] = {1,2,3,4};
+
+    //uniform initialization
+    int myscalar {0};
+    int myvector[5] {1,2,3,4};
+}
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+
+** Basic Input/Output
+*Base Classes for Input and Output*
+- std::basic_ostream & std::basic_istream *base class* for input and output
+
+*Type Definitions for Convenience*
+- std::ostream & std::istream
+
+*Objects of ostream resp istream class*
+- std::cout & std::cin
+- std:cout for *console* output trough /operator<</
+- std::cin for *keyboard* input through /operator>>/
+- accessible trough /<iostream>/
+
+#+LATEX: \captionof{listing}{Console I/O}
+#+BEGIN_SRC C++ :cmdline "<<< 'Christian\n63'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+using namespace std;
+int main() {
+    cout << "Hello World " << 45 << 8.2f << " " << endl;
+    string name;
+    int age {0};
+    cin >> name; // cin is read from the shell redirection: :cmdline "<<< 'Christian\n63'" of the 
+    cin >> age; 
+    cout << "Your name is: " << name << endl;
+    cout << "Your age is: " << age << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Hello World 458.2 
+: Your name is: Alice
+: Your age is: 63
+
+
+#+LATEX: \captionof{listing}{getline() to read}
+#+BEGIN_SRC C++ :cmdline "<<< 'Christian Bollinger\n'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+using namespace std;
+int main() {
+    char buff[512] {0};
+    cin.getline(buff,64,'\n'); // read until newline is entered!
+    cout << "Your name is: " << buff << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Your name is: Christian Bollinger
+
+
+** Function I
+- Basic building blocks of C++
+- Help avoid writing repetitive logic/code in a program
+- Same code can be reused in different parts of the program
+- Makes the code modular as the program is divided can be divided into cohesive modules
+- Reduces overall complexity of a program
+
+#+ATTR_LATEX: :options {Structure of a Function}
+#+BEGIN_infobox
+/<return type> <name> (<parameters>){<body>}/ \\
+
+The return type along with the parameters is called the signature.
+#+END_infobox
+
+#+LATEX: \captionof{listing}{Function declaration, definition and invocation}
+#+BEGIN_SRC C++ :cmdline "<<< '15\n37'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+int Add(int, int);                        // Prototype or declaration
+
+int main() {
+    int a {0}, b{0}, result {0};          // Variable definition
+    std::cin >> a;  // 15
+    std::cin >> b;  // 37
+    result = Add(a, b);                   // Function invocation 
+    std::cout << result << std::endl;
+    return 0;
+}
+
+int Add(int x, int y)                     // Function definition
+{
+    return x + y;
+}
+#+END_SRC
+
+#+RESULTS:
+: 52
+
+- Declaration :: Introduces a name to the program.
+
+
+** Function II
+
+#+ATTR_LATEX: :options {Function Prototype and its Implementation}
+#+BEGIN_infobox
+Functions should always be put in their own source files!
+#+END_infobox
+
+#+LATEX: \captionof{listing}{Structure of a CPP Project}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  func2/math
+        +-- inc
+        |   +-- math.hpp
+        +-- src
+        |   +-- math.cpp
+        |   +--main.cpp
+        +--Makefile
+#+END_src     
+
+
+#+LATEX: \captionof{listing}{Header File}
+#+BEGIN_SRC C++ :tangle projects/section-02/func2/math/inc/math.hpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#ifndef MATH_HPP
+#define MATH_HPP
+
+int Add(int x, int y);
+
+#endif
+#+END_SRC
+
+#+RESULTS:
+
+#+LATEX: \captionof{listing}{Implementation File}
+#+BEGIN_SRC C++ :tangle projects/section-02/func2/math/src/math.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+int Add(int x, int y)
+{
+    return x + y;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Main CPP}
+#+BEGIN_SRC C++ :tangle projects/section-02/func2/math/src/main.cpp :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include "../../math/inc/math.hpp"
+#include <iostream>
+
+int main()
+{
+    std::cout << Add(3, 5) << std::endl;
+    return 0;
+}
+#+END_SRC
+
+#+LATEX: \captionof{listing}{Makefile}
+#+BEGIN_SRC makefile :tangle no :exports code :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/math.cpp
+
+app: $(SRC)
+        $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+        ./app
+
+clean:
+        rm -f app
+#+END_SRC
+
+#+BEGIN_SRC makefile :tangle projects/section-02/func2/math/Makefile :exports none :padline no
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -Wextra -Iinc
+
+SRC=src/main.cpp src/math.cpp
+
+app: $(SRC)
+    $(CXX) $(CXXFLAGS) $(SRC) -o app
+
+run: app
+    ./app
+
+clean:
+    rm -f app
+#+END_SRC
+#+LATEX: \captionof{listing}{Run}
+#+BEGIN_SRC shell :dir projects/section-02/func2/math :results output
+make run
+#+END_SRC
+
+#+RESULTS:
+: g++ -std=c++17 -Wall -Wextra -Iinc src/main.cpp src/math.cpp -o app
+
+
+** TODO Overview of Debugging
+- [ ] Describe emacs gnu debugger session
+
+** Uniform Initilalization
+
+- *C++98* provided different ways to initialize types
+  - Scalar types can be initialized with /=/ or /()/
+  - Array types have to be initialized with /{}/
+
+- *C++11* introduces uniform initialization
+  - Use /{}/ for all the types
+
+- *Advantages*
+  - It forces initialization
+  - You can use direct initialization for array types
+  - It prevents narrowing conversion
+  - Uniform syntax for all types
+
+
+#+LATEX: \captionof{listing}{Initialization before C++11}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string>
+int main() {
+// primitive types
+    int ai;                             // uninitialized
+    int a2 = 0;                         // copy initialization
+    int a3(5);                          // direct initialization
+    
+
+//user defined types
+    std::string s1;                      // default constructor is invoced
+                                         // and initializes s1
+    std::string s2("C++");               // direct initialization
+
+// array types
+    char d1[8];                          // uninitialized
+    char d2[8] = {'\n'};                 // copy initialization
+    char d3[8] = {'a','b','c','d','\n'}; // aggregat initialization
+                                         // (but also copy initialization)
+    char d4[8] = {"abcd\n"};             // copy initialization
+}
+#+END_SRC
+
+#+RESULTS:
+
+
+#+LATEX: \captionof{listing}{Initialization with C++ >= Std11}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string>
+int main() {
+// primitive types
+    int b1{};                            // Value initialization to default value
+    //  int b1();                            // most vexing parse, i.e. b1() is a function
+    int b3{5};                           // direct initialization
+    
+// array types
+    char e1[8]{};                        // Value initialization to default value
+    char e2[8]{"Hello"};                 // direct initialization
+
+// heap based objects
+    int *p1 = new int;                   // uninitialized
+    int *p2 = new int{};                 // value initialization
+    char *p3 = new char[8]{};            // value initialization
+    char *p4 = new char[8]{"Hello"};     // direct initialization
+}
+#+END_SRC
+
+
+
+#+ATTR_LATEX: :options {Summary}
+#+BEGIN_infobox
+1. Value initialization => T obj{};
+2. Direct initialization => T obj{v};
+3. Copy initialization => T obj = v; \\
+
+*Avoid using copy initalization for user defined objects with C++ >= Std11*
+#+END_infobox
+
+#+LATEX: \captionof{listing}{Narrowing Conversion}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <string>
+int main() {
+
+// compiles without warning
+    float f1 = 0;
+    int i1 = f1;
+
+// thorws compile time warning
+    float f2{};
+    int i2{f1};                       
+
+}
+#+END_SRC
+
+** Pointers
+*** Pointer
+- Points to another type
+- Holds the memory address of another variable
+- Used for *indirect access* to other variables
+- *Need to be initilalized during declaration*
+- Declared with * operator
+  - /int * ptr;/
+  - /int *p1, *p2, *p3, p4;/ <= p4 is not a pointer
+
+*** Address Of Operator
+- & is the address of operator
+- when applied to any variable, we gat the address of that variable
+  (the location where it is stored in the memory)
+  - /int x = 10;/
+  - /cout << &x; ///prints the address of x/
+
+#+LATEX: \captionof{listing}{Address of Operator}
+#+BEGIN_SRC C++ :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+using namespace std;
+
+int main() {
+
+    int x = 10;
+    cout << "Address of x: " << &x << endl;
+    int *ptr = &x;
+    cout << "Address of ptr: " << ptr << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Address of x: 0x7ffd59791794
+: Address of ptr: 0x7ffd59791794
+
+*** Derefernce Operator
+- To access a value at the address in the pointer, use the * operator
+- Also called derefernce operator
+- Allows indirect read or write operation on the variable through the
+  pointer
+  - /int x = 10;/
+  - /int *ptr = &x;/
+  - /*ptr = 5; ///Assign 5 to the address of x/
+  - /int y = *ptr; ///Read a value from address of x/
+  
+#+LATEX: \captionof{listing}{Dereference Operator}
+#+BEGIN_SRC C++ :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+using namespace std;
+
+int main() {
+
+    int x = 10;
+    cout << "Value of x: " << x << endl;
+    cout << "Address of x: " << &x << endl;
+    int *ptr = &x;
+    cout << "Address of ptr: " << ptr << endl;
+
+    *ptr = 5;
+    cout << "New value of x: " << x << endl;
+
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Value of x: 10
+: Address of x: 0x7ffea160b094
+: Address of ptr: 0x7ffea160b094
+: New value of x: 5
+
+*** Null Operator
+- /NULL/ is a macro in C & pre-C++11
+- It is defined as 0 in most compilers
+- Used to initialize pointer types
+- *C++11* introduced a new type of null called /nullptr/
+- This is type safe and better then NULL macro
+- Always use /nullptr/ to initialize a pointer, instead of NULL macro
+
+#+LATEX: \captionof{listing}{Null Operator}
+#+BEGIN_SRC C++ :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+using namespace std;
+
+int main() {
+
+    int x = 10;
+    cout << "Value of x: " << x << endl;
+    cout << "Address of x: " << &x << endl;
+    int *ptr = nullptr;
+    cout << "Address of ptr: " << ptr << endl;
+
+    // do not read from a nullptr
+    // cout << ptr << endl;
+
+    // do not write into a nullptr
+    // *ptr = 5;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Value of x: 10
+: Address of x: 0x7ffcb2cecfb4
+: Address of ptr: 0
+: 0
+
+
+** Assignment 1
+
+Implement the following functions using pointer arguments only
+
+#+LATEX: \captionof{listing}{Assignment 1}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+// Add two numbers and return the sum
+int Add(int *a, int *b) {
+    return *a + *b;
+}
+
+// Add two numbers and return the sum through the third pointer argument
+void AddVal(int *a, int *b, int *result) {
+    *result = *a + *b;
+}
+
+// Swap the value of two integers
+void Swap(int *a, int *b) {
+    // swap the values not pointer
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Generate the factorial of a number and return that through the second pointer argument
+void Factorial(int *a, int *result) {
+    *result = 1;
+    for(int i=2; i<=*a; ++i) {
+        *result *= i;
+    }
+}
+
+using namespace std;
+int main() {
+    int x{5}, y{7}, *a{&x}, *b{&y};
+    cout << "Add -> 5+7: " << Add(a,b) << endl;
+
+    int res{0}, *result{&res};
+    AddVal(a,b,result);
+    cout << "AddVal -> 5+7: " << *result << endl;
+
+    Swap(a,b);
+    cout << "Values: a=" << *a << ", b=" << *b << endl; 
+    
+    Factorial(a,result);
+    cout << "Factorial -> 7!: " << *result << endl;  
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Add -> 5+7: 12
+: AddVal -> 5+7: 12
+: Values: a=7, b=5
+: Factorial -> 7: 5040
+
+
+** References
+*** Reference Type
+- Define an alternative name for a variable (alias)
+- It is created within the & operator during *declaration*
+- Always needs an initilaizer (called *referent*)
+- The referent should be a variable
+- It is *bound* to its referent
+- It can be used to modify a variable indirectly (like a pointer)
+- A reference is *NOT* a new variable; it is just another name
+
+#+LATEX: \captionof{listing}{Reference Type}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+int main() {
+//Referent
+    int x = 10;
+//Reference
+    int &ref =x;
+    int y = 20;
+    //ref = y;
+
+    x=6;
+    cout <<"x: " << &x << endl;
+    cout << "ref: " << &ref << endl;
+
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: x: 0x7fff380aa260
+: ref: 0x7fff380aa260
+
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>                         | <40>                             |
+| *Reference*                    | *Pointer*                          |
+|------------------------------+----------------------------------|
+| Always need an initializer   | Initializer is optional          |
+| Initializer should be lvalue | Initializer need not be lvalue   |
+| Cannot be nullptr            | Can be nullptr                   |
+| Bound to its referent        | Can point to other variables     |
+| No storage required          | Has its own storage              |
+| Dererference is not required | Dereference operator is requried |
+
+
+** Assignment 2
+Implement the following functions
+
+#+LATEX: \captionof{listing}{Assignment 2}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+//Add two numbers and return the result through a reference parameter
+void Add(int a, int b, int &result) {
+    result = a+b;
+}
+
+//Find factorial of a number and return that through a reference parameter
+void Factorial(int a, int &result) {
+    result = 1;
+    for(int i=2; i<=a; ++i) {
+    result *= i;
+    }
+}
+
+//Swap two numbers through reference arguments
+void Swap(int &a, int &b) {
+    // swap the values not pointer
+    int temp = a;
+    a = b;
+    b = temp;
+}
+
+using namespace std;
+int main() {
+    int x{5}, y{7}, result{0};
+
+    Add(x,y,result);
+    cout << "Add -> 5+7: " << result << endl;
+
+    Factorial(x,result);
+    cout << "Factorial -> 5!: " << result << endl;  
+
+    Swap(x,y);
+    cout << "Values: x=" << x << ", y=" << y << endl; 
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Add -> 5+7: 12
+: Factorial -> 5!: 120
+: Values: x=7, y=5
+
+
+** References vs. Pointers
+
+#+LATEX: \captionof{listing}{Argument Passing by Value}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+//Swap two numbers through value arguments
+void Swap(int x, int y) {
+    // swap the values not pointer
+    int temp = x;
+    x = y;
+    y = temp;
+}
+
+using namespace std;
+int main() {
+    int a = 5;
+    int b = 7;
+
+    Swap(a,b);
+    cout << "Values: a=" << a << endl;
+    cout << "Values: b=" << b << endl;
+      
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Values: a=5
+: Values: b=7
+
+
+#+LATEX: \captionof{listing}{Argument Passing by Address}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+//Swap two numbers through address arguments
+void Swap(int *x, int *y) {
+    // swap the values not pointer
+    int temp = *x;
+    ,*x = *y;
+    ,*y = temp;
+}
+
+
+using namespace std;
+int main() {
+    int a = 5;
+    int b = 7;
+
+    Swap(&a,&b);
+    cout << "Values: a=" << a << endl;
+    cout << "Values: b=" << b << endl;
+      
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Values: a=7
+: Values: b=5
+
+#+LATEX: \captionof{listing}{Argument Passing by Reference}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+//Swap two numbers through reference arguments
+void Swap(int &x, int &y) {
+    // swap the values not pointer
+    int temp = x;
+    x = y;
+    y = temp;
+}
+
+using namespace std;
+int main() {
+    int a = 5;
+    int b = 7;
+
+    Swap(a,b);
+    cout << "Values: a=" << a << endl;
+    cout << "Values: b=" << b << endl;
+      
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Values: a=7
+: Values: b=5
+
+
+#+LATEX: \captionof{listing}{Pointer vs References - nullptr-}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+//Prints a number: argument passing as address
+void printP(int *ptr) {
+    if (nullptr != ptr)           // Mandatory: check for nullptr
+        cout << *ptr << endl;
+    else
+        cout << "nullptr passed" << endl;
+}
+
+//Prints a number: argument passing as Reference
+void printR(int &ref) {
+    cout << ref << endl;
+}
+
+int main() {
+    int a = 5;
+    printP(&a);
+    printP(nullptr);        // runtime error if not checked
+    printR(a);
+    // printR(nullptr)      // compile time error
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 5
+: nullptr passed
+: 5
+
+
+#+ATTR_LATEX: :options {Reference vs. Pointer}
+#+BEGIN_infobox
+- Pointers need to be checked for nullptr
+- Compiler guarantees that a reference is valid
+- Code is simpler to read with references
+#+END_infobox
+
+
+** The const Qualifier
+
+- Creates a variable that is constant
+- Value cannot be modified
+- Attempt to modify will cause compilation error
+- Qulified to a declaration, but always needs an initilaizer
+- Replaces C macros
+  - not type safe
+  - not have a scope
+  - lead to subtle bugs which are difficult to find
+- Commonly used with references
+
+#+ATTR_LATEX: :options {Declaration of a Constant}
+#+BEGIN_infobox
+/const <type> <variable> {initializer}/
+/const float PI {3.141f}/
+#+END_infobox
+
+
+#+LATEX: \captionof{listing}{Magic Numbers}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+    float radius = 0;
+    cin >> radius;
+    float area = 3.14159f * radius * radius;
+    float circumference = 3.14f * 2 * radius;
+
+    cout << "Area is: " << area << endl;
+    cout << "Circumference is : " << circumference << endl;
+      
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Area is: 4488.83
+: Circumference is : 237.384
+
+
+#+LATEX: \captionof{listing}{No Magic Numbers}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+    float radius = 0;
+    cin >> radius;
+    const float PI = 3.141f;                // use captial letters to indicate const
+    float area = PI * radius * radius;
+    // PI = 5;                              // compile time error
+    float circumference = PI * 2 * radius;
+
+    cout << "Area is: " << area << endl;
+    cout << "Circumference is : " << circumference << endl;
+          
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Area is: 4487.99
+: Circumference is : 237.46
+
+
+** cons Qualifier & Compound Types
+
+#+ATTR_LATEX: :options {Read from right to left}
+#+BEGIN_infobox
+const int *ptr = ...;
+
+*ptr is a pointer to an integer of type constant.
+
+This means *ptr is constant ptr is not.
+
+#+END_infobox
+
+#+LATEX: \captionof{listing}{const Qualfier /  Compount Types}
+#+BEGIN_SRC C++ :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    const int CHUNK_SIZE = 512;
+    const int *ptr = &CHUNK_SIZE;        // if creating a pointer to a constant
+                                         // than the poiner should also be a constant
+    // *ptr = 1;                         // not allowed
+
+    int x = 10;                           
+    ptr = &x;                            // assign a new address to the pointer is allowed
+                                         // By declaring the pointer as constant the constantness
+                                         // of the original variable is preserved
+    // *ptr = 1;                         // not allowed
+
+    x = 1;                               // strangely this works
+    cout << "x=" << x <<", *ptr=" << *ptr << endl;
+
+   (void)*ptr;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: x=1, *ptr=1
+
+
+#+ATTR_LATEX: :options {Constant Pointer}
+#+BEGIN_infobox
+Constant pointers/references are usfull as arguments to functions where you don't
+want to modify the value of the variable that is passed into the
+function.
+#+END_infobox
+
+
+
+#+LATEX: \captionof{listing}{const pointer}
+#+BEGIN_SRC C++ :main no :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+void Print1(const int *ptr) {
+    cout << "const *ptr: " << *ptr << endl;
+    // *ptr = 70;                       // not allowed 
+}
+
+void Print2(const int &ref) {
+    cout << "const &ref: " << ref << endl;
+    // *ptr = 70;                       // not allowed 
+}
+
+int main() {
+
+    int x = 10;
+    Print1(&x);
+    Print2(x);
+    cout << "main->x=" << x << endl;
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: const *ptr: 10
+: const &ref: 10
+: main->x=10
+
+
+** Assignment 3
+
+Write the following code & do as instructed in the comments. Build and
+observe.
+
+#+LATEX: \captionof{listing}{Assignment 3}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    // 1.) Try to modify x1 & x2 and see the compilation output
+    int x = 5 ;
+    const int MAX = 12 ;
+    int &ref_x1 = x ;
+    const int &ref_x2 = x ;
+        
+    ref_x1 = 100;
+    // ref_x2 = 200;     // compile time error 
+            
+    // 2.) Try to modify the pointer (e.g. ptr1) and the pointee value (e.g. *ptr1)
+    const int *ptr1 = &x ;          // const value
+    int *const ptr2 = &x ;          // const pointer
+    const int * const ptr3 = &x ;   // const value and const pointer
+        
+    int y = 100;
+    ptr1 = &y;       // modify pointer
+    // *ptr1 = y;    // modify pointee, compile time error
+
+    // ptr2 = &y;    // modify pointer, compile time error
+    ,*ptr2 = y;    // modify pointee
+
+    // ptr3 = &y;    // modify pointer, compile time error
+    // *ptr3 = y;    // modify pointee, compile time error
+
+    // 3.) Find which declarations are valid. If invalid, correct the declaration
+    const int *ptr4 = &MAX ;
+    // int *ptr5 = &MAX ; // zuweisung const value
+    const int *ptr5 = &MAX ;
+
+    const int &r1 = ref_x1 ;
+    // int &r2 = ref_x2 ;
+    const int &r2 = ref_x2 ;
+
+    const int *&p_ref1 = ptr1 ;
+    int * const &p_ref2 = ptr2 ;
+
+    //avoid warning
+    cout << *ptr1   << " " << *ptr2   << " "
+         << *ptr3   << " " << *ptr4   << " "
+         << *ptr5   << " " << r1      << " "
+         << r2      << " " << *p_ref1 << " "
+         << *p_ref2 << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 100 100 100 12 12 100 100 100 100
+
+
+** Automatic Type Intference (C++11)
+
+- Indicates storage class of a variable in C & pre-C++11
+- Remnant of B language (which largely influenced C)
+- Meaning has been changed in C++11
+- Allows the compiler to automatically infer the type from the initializer
+- The initializer is important
+  - /auto <identifier> = <initializer>/
+- <initializer could be an expression that returns some value e.g. a
+  literal, mathematical expression or a function call that returns a
+  value
+  
+#+LATEX: \captionof{listing}{auto Keyword}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int Sum(int x, int y) {
+    return x + y;
+}
+
+int main() {
+
+    // usage of auto keyword
+    auto i = 10;
+    auto j = 5;
+    auto sum = i + 4.3f;
+    auto result = Sum(i, j);
+
+    // auto and static keyworkd
+    static auto y = 2;
+
+    // auto and const keyworkd
+    const int x = 10;
+    auto var1 = x;           // var1 not a const variable
+    const auto var2 = x;     // var2 is a const variable
+
+    // auto and reference
+    auto &var3 = x;          // var3 is a constant reference
+
+    // auto and pointers
+    auto ptr = &x;           // ptr is a pointer to const int (const int*)
+
+    // avoids warning
+    cout << sum    << ", " << result << ", "
+         << y      << ", " << var1    << ", "
+         << var2   << ", " << var3    << ", "
+         << *ptr   << ", " 
+         << endl;
+
+    return 0;
+
+}
+#+END_SRC
+
+#+RESULTS:
+: 14.3, 15, 2, 10, 10, 10, 10, 
+
+#+ATTR_LATEX: :options {auto Keyword and Qualifiers}
+#+BEGIN_infobox
+When using auto Keyworkd, the qualifiers are discarded for variables
+but not for pointers and references. \\
+
+Do not use the * for pointer declaration with auto Keyword.
+#+END_infobox
+
+#+LATEX: \captionof{listing}{auto Keyword and initializer list}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    // Initializer list note = is required here!
+    auto list = { 1,2,3,4};  // type is initializer list     
+
+    // print initializer list
+    for (auto i : list)
+        cout << i << ", ";
+    cout << endl;
+     
+    return 0;
+
+}
+#+END_SRC
+
+#+RESULTS:
+: 1, 2, 3, 4, 
+
+
+** Range-Based For Loop 1 (C++11)
+*** Standard For-Loop
+#+LATEX: \captionof{listing}{standard for Loop}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    int arr[]{1,2,3,4,5};
+
+    for(int i=0; i<5; i++)
+        cout << arr[i] << ", ";
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 1, 2, 3, 4, 5, 
+
+*** Range-based For-Loop
+
+- Allows iteration over arrays and containers
+- Doesn't need index variable
+- Each iteration returns an element
+- Can be used with any object that behaves like a *range*
+
+#+ATTR_LATEX: :options {Syntax}
+#+BEGIN_syntaxbox
+/for(variable declaration : range) {/\\
+    /statement;/\\
+/}/
+#+END_syntaxbox
+
+#+LATEX: \captionof{listing}{Range-Based For Loop}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    int arr[]{1,2,3,4,5};
+
+    for(const auto& element : arr) // use const to avoid modifying arr[]
+        cout << element << ", ";
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 1, 2, 3, 4, 5, 
+
+*** For vs Range-Based For
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>                                                                          | <40>                                   |
+| *For*                                                                           | *Range-Based For*                        |
+|-------------------------------------------------------------------------------+----------------------------------------|
+| Index base iteration                                                          | Does not use index to iterate          |
+| Requires end condition                                                        | End condition is provided by the range |
+| Index variabel needs to be in-, decremented                                   | No need to in-, decrement              |
+| Error prone e.g. wrong end conditicion, over-, underflow, incorrect iteration | Lesses chances of errors               |
+| More control over iteration                                                   | No control over iteration              |
+| Use for finer control                                                         | Use with ranges                        |
+|                                                                               |                                        |
+
+
+** Range-Based For Loop 2 (C++11)
+
+#+LATEX: \captionof{listing}{Internal Organization of Range-Based for loop}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    int arr[]{1,2,3,4,5};
+
+    int *beg = &arr[0]; // points to the beginning of arr
+    int *end = &arr[5]; // points to one past the end of arr
+
+    while(beg != end) {
+        cout << *beg << ", ";
+        beg++;
+    }
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 1, 2, 3, 4, 5, 
+
+
+#+LATEX: \captionof{listing}{C++11: Internal Organization of Range-Based for loop}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int main() {
+
+    int arr[]{1,2,3,4,5};
+
+    auto &&range = arr;
+    auto itrBeg = begin(range);
+    auto itrEnd = end(range);
+
+    for(;itrBeg != itrEnd; ++itrBeg)
+    {
+        auto v = *itrBeg;
+        cout << v << ", ";
+    }
+
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 1, 2, 3, 4, 5, 
+
+
+** Function Overloading
+
+#+LATEX: \captionof{listing}{Function Overloading}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int    Add(int a, int b)       {return a+b;}
+double Add(double a, double b) {return a+b;}
+    
+int main() {
+
+    int result1 = Add(5,3);          // compiler checks the arguments
+    cout << result1 << endl;
+
+    double result2 = Add(3.1,6.2);  // compiler checks the arguments
+    cout << result2 << endl;
+      
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 8
+: 9.3
+
+*** Function Overloading
+- Two or more functions declared with the same name
+  - Arguments should differ in type and/or number
+  - For pointers & references arguments, qualifiers participate in overlaod
+  - Return type is ignored
+  - For member functions, qualifiers participate in overload
+- Different implementation of the same behaviour
+- The correct implementation is chosen based on arguments
+- This is resolved at compile-time
+  - *static polymorphism*
+- Convenience for the caller
+
+*** Name Mangeling  
+- Unique names generated by the compiler for functions
+- Allows linker to link the call with the correct overloaded function
+- Name Mangeling algorithm varies from compiler to compiler
+- Depends on the type & number of function arguments
+- Consequently, C++ functions are not callable from C code
+
+*** Compiler directive extern "C"
+- Compiler directive applied on global functions and variables
+- Suppresses name mangeling of the type on which it is applied
+- Can be applied only to one function in a set of overloaded functions
+- Allows C++ functions to be called from C or other languages
+
+
+#+LATEX: \captionof{listing}{extern "C"}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+// Apply on function declartion & definition
+
+// in .h file
+extern "c" <function declaration>
+
+// in .cpp file
+extern "c" <function definition>{
+}
+#+END_SRC
+
+*** Map File to inspect Name Mangeling
+
+#+LATEX: \captionof{listing}{Generate Map File with Linke Option: Wl,-Map=fomap.map}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -Wl,-Map=fomap.map" :exports both :padline no :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+int    Add(int a, int b)       {return a+b;}
+double Add(double a, double b) {return a+b;}
+
+extern "C" void print(int x)    {cout << x << endl;}
+void print(double x) {cout << x << endl;}
+    
+int main() {
+
+    int result1 = Add(5,3);          // compiler checks the arguments
+    cout << result1 << endl;
+
+    double result2 = Add(3.1,6.2);  // compiler checks the arguments
+    cout << result2 << endl;
+      
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 8
+: 9.3
+
+
+#+ATTR_LATEX: :options {Usage of  extern "C"}
+#+BEGIN_infobox
+extern "C" must be applied at the function declaration as well as at
+the function definition (link error)\\
+
+if the header file is included into the definition file, extern "C" can be omitted within the definition. \\
+
+In the declaration as well as in the definition file extern "C" can be used with braces:\\
+/extern "C" {/
+   /func1()/
+   /func2()/
+/}/
+#+END_infobox
+- Allows some or all function arguments to have a default value
+- It becomes optional to pass values to those arguments
+  - Compiler automatically assigns default value if no explicit value
+    is provided
+  - Explicit value is preferred over default value
+  - Default arguments should begin from the right side in the list of
+    function arguments
+  - Simplifies the invocation for the caller
+
+#+LATEX: \captionof{listing}{Default Arguments}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+void CreateWindow(const char* title, int x, int y, int width, int height);
+
+void CreateWindow(
+    const char* title,
+    int x,
+    int y = -1,
+    int width = - 1,
+    int height = -1) {
+
+    cout << "Title: " << title << endl;
+    cout << "x-coordinate: " << x << endl;
+    cout << "y-coordinate: " << y << endl;
+    cout << "width: " << width << endl;
+    cout << "height: " << height << endl;
+        
+}
+        
+int main() {
+
+    CreateWindow("No Default", 100, 200, 1024, 720);
+    cout << endl;
+    CreateWindow("Default",1000); 
+          
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Title: No Default
+x-coordinate: 100
+y-coordinate: 200
+width: 1024
+height: 720
+
+Title: Default
+x-coordinate: 1000
+y-coordinate: -1
+width: -1
+height: -1
+#+end_example
+
+
+#+ATTR_LATEX: :options {}
+#+BEGIN_infobox
+Pass the values starting from the left side, no gaps allowd between
+default argument list.
+#+END_infobox
+
+
+** Inline Functions
+
+- A function that is marked with /inline/ keyword
+- Such functions are defined in a header file
+- Requests the compiler to replace the call with the function body
+- The overhead of the function call is avoided
+  - Stach memory for arguments not required
+  - No need to save the return address
+- May improve the performance of the code
+
+
+#+LATEX: \captionof{listing}{Inline Functions}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+// inline int Square(int x) {return x*x;}
+#define Square(x) x*x
+        
+int main() {
+        
+    int val = 5;
+    int result = Square(val + 1);
+
+    cout << result << endl;
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: 11
+
+#+ATTR_LATEX: :options {To Remember}
+#+BEGIN_infobox
+- Only a *request* to the compiler
+- Certain functions may not be inlined
+  - large functions
+  - functions having too many conditional statements
+  - recursive functions
+  - functionss invoked through pointers
+  - etc
+- Different compilers have different rules
+- Modern compilers may automatically inline even no-inline functions
+- Excessive inlining may increase binary size
+#+END_infobox
+
+
+*** Macros vs. Inline Functions
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>                                         | <40>                                     |
+| *Macro*                                        | *Inline Function*                          |
+|----------------------------------------------+------------------------------------------|
+| Works through text substition                | The call is replaced with body           |
+| Error prone due to substition nature         | Safe to use as it has function semantics |
+| Does not have an address                     | Has an address                           |
+| Difficult to use with multiple lines of code | Can have multiple lines of code          |
+| Cannot be used for member functions          | Class member functions can be inline     |
+
+
+** Function Pointers
+- Pointer that holds the address of the function
+- The type is same as the *signature* of the function (return type & arguments)
+- Can be used to inderectly invoke the function even if the function name is not known
+- Used by algorithm and classes for customization
+
+#+ATTR_LATEX: :options {Syntax}
+#+BEGIN_syntaxbox
+<ret> (*fnptr)(args) = &Function;
+int (*PtrAdd)(int,int) = &Add;
+#+END_syntaxbox
+
+#+LATEX: \captionof{listing}{Function Pointer}
+#+BEGIN_SRC C++ :cmdline "<<< '37.8'" :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+using namespace std;
+
+void Print(int count, char ch) {
+
+    for(int i = 0; i < count; ++i) {
+	cout << ch << ' ';
+    }
+    cout << endl;
+}
+
+void EndMessage() {
+    cout << "Enf of program" << endl;
+}
+
+int main() {
+
+    atexit(EndMessage);
+    
+    void(*pfn) (int, char) = Print;
+    (*pfn)(8, '#');
+    pfn(16,'#');
+
+    
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: # # # # # # # # 
+: # # # # # # # # # # # # # # # # 
+: Enf of program
+
+
+
+** Namespace
+- Named declarative region used for declaring types
+- The types are not visible outside the namespace
+- Standard library is in /std/ namespace
+- Prevents name clashes
+- Helps modularize code
+  - /namespce <name> {/
+         /(namespace, class, structure, function, variable, etc)/
+    /}/
+*** Namespace Access
+- Types inside a namespace have a scope
+- Cannot be accessed outside the namespace
+- Either open the namespace or the type
+  - use the global using declarative and open the entire namespace
+    - /using namespace std;/
+  - use the using declerative and open a specific type
+    - /using std::cout/
+  - using the full qualified name
+    - /std::cout << "C++" << std::endl;/
+
+
+#+LATEX: \captionof{listing}{Namespace}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+
+namespace Avg {
+    float Calculate(float x, float y) { return (x*y)/2;}
+}
+
+namespace Basic {
+    float Calculate(float x, float y) { return (x*y);}
+}
+   
+int main() {
+
+    Avg::Calculate(3.2f, 7.8f);
+    Basic::Calculate(3.2f, 7.8f);
+    return 0;
+}
+#+END_SRC
+

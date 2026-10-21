@@ -1,0 +1,7 @@
+* Used Compiler Flags
+
+- *C++ :flags "-std=c++11 -Wall -Wextra -fno-elide-constructors"*
+  - *-Wall* Enable the standard, generally safe warnings most people should always use.
+  - *-Wextra* Enable the more pedantic / deeper warnings that -Wall leaves out.
+  - *-fno-elide-constructors* call copy/move constructors instead of optimizing them away
+

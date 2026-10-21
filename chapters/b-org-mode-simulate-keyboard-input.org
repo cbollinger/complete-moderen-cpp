@@ -1,0 +1,191 @@
+* Org Mode Simulate keyboard input
+
+A nice pattern for demonstration purpose C in Org-mode is to keep
+your program unchanged (still using cin) and simulate input with an
+istringstream. That way, your examples are reproducible and don't
+depend on how Babel handles stdin.
+
+#+LATEX: \captionof{listing}{Template 1: Simulate keyboard input}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <sstream>
+
+int main() {
+    std::istringstream cin_sim("63");
+
+    int age{};
+    cin_sim >> age;
+
+    std::cout << "Your age is: " << age << '\n';
+}
+#+END_SRC
+
+#+RESULTS: Template 1: Simulate keyboard input
+: Your age is: 63
+
+#+LATEX: \captionof{listing}{Template 2: Multiple Inputs}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <sstream>
+
+int main() {
+    std::istringstream cin_sim(
+        "Alice\n"
+        "63\n"
+        "1.75\n"
+    );
+
+    std::string name;
+    int age;
+    double height;
+
+    cin_sim >> name >> age >> height;
+
+    std::cout << "Name   : " << name   << '\n';
+    std::cout << "Age    : " << age    << '\n';
+    std::cout << "Height : " << height << '\n';
+}
+#+END_SRC
+
+#+RESULTS: Template 2: Multiple Inputs
+: Name   : Alice
+: Age    : 63
+: Height : 1.75
+
+#+LATEX: \captionof{listing}{Template 3: Reading a vector}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+int main() {
+    std::istringstream cin_sim(
+        "5\n"
+        "10 20 30 40 50\n"
+    );
+
+    int n;
+    cin_sim >> n;
+
+    std::vector<int> values(n);
+
+    for (int& x : values)
+        cin_sim >> x;
+
+    for (int x : values)
+        std::cout << x << ' ';
+
+    std::cout << '\n';
+}
+#+END_SRC
+
+#+RESULTS: Template 3: Reading a vector
+: 10 20 30 40 50 
+
+
+For demonstration purpose, it's often useful to write the program exactly as students would:
+
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+std::istream& in = cin_sim;
+#+end_src
+
+
+#+LATEX: \captionof{listing}{Template 4: Keep the code using cin}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+int main() {
+    std::istringstream cin_sim(
+        "3\n"
+        "11 22 33\n"
+    );
+
+    std::istream& in = cin_sim;
+
+    int n;
+    in >> n;
+
+    std::vector<int> v(n);
+
+    for (int& x : v)
+        in >> x;
+
+    for (int x : v)
+        std::cout << x << ' ';
+
+    std::cout << '\n';
+}
+#+END_SRC
+
+Later, to make it interactive, change only one line:
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  std::istream& in = std::cin;
+#+end_src
+
+Everything else stays the same.
+
+#+LATEX: \captionof{listing}{Template 5: Simulate a file}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <sstream>
+#include <string>
+
+int main() {
+    // std::ifstream file("data.txt");
+    std::istringstream file_sim(
+        "first line\n"
+        "second line\n"
+        "third line\n"
+        );
+
+    std::string line;
+
+    while (std::getline(file_sim, line))
+        std::cout << "[" << line << "]\n";
+}
+#+END_SRC
+
+#+RESULTS: Template 5: Simulate a file
+: [first line]
+: [second line]
+: [third line]
+
+This behaves like
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+std::ifstream file("data.txt");
+#+end_src
+
+
+#+NAME: sample-input
+| 10 |
+| 20 |
+| 30 |
+| 40 |
+
+#+LATEX: \captionof{listing}{Org-mode variable driven input}
+#+BEGIN_SRC C++ :exports both :var values=sample-input :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+#include <vector>
+
+int main()
+{
+    for (const auto& row : values)
+    {
+        std::cout << row[0] << ' ';
+    }
+    std::cout << "\n";
+}
+#+END_SRC
+
+#+RESULTS:
+: 10 20 30 40 
+
+
+#+ATTR_LATEX: :options {inspect the generated source with:}
+#+BEGIN_infobox
+/M-x org-babel-expand-src-block/
+#+END_infobox
+
+

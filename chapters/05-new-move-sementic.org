@@ -1,0 +1,247 @@
+* Move Semantic
+
+** L-values, R-values & R-value References (C++11)
+
+
+#+ATTR_LATEX:  :align p{8cm} p{8cm}
+| <40>                                              | <40>                                                    |
+| *L-Value*                                           | *R-Value"                                               |
+|---------------------------------------------------+---------------------------------------------------------|
+| Has a name                                        | Does not have a name                                    |
+| All variables are L-Values                        | R-value is a temporary value                            |
+| Can be assigend values                            | Cannot be assigned values                               |
+| Some expressions return l-values                  | Some expressions return r-value                         |
+| L-value persists beyond the expression            | Does not persist beyond the expression                  |
+| Functions that return by reference return l-value | Functions that return by value return r-value           |
+| Reference to l-value (called l-value reference)   | R-value reference to r-value (called r-value reference) |
+|                                                   |                                                         |
+
+
+#+LATEX: \captionof{listing}{L-Value and R-Value}
+#+BEGIN_SRC C++ :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  int Add(int x, int y)   { return x+ y;}
+  int & Transform(int &x) { x *=x; return x;}
+
+  using namespace std;
+
+  int main() {
+      //x,y & z are l-values & 5, 10 & 8 are r-values
+
+      int x = 5;
+      int y = 10;
+      int z = 8;
+
+      //Expression returns r-value
+      int result = (x+y) * z;
+
+      //Expression returns l-value
+      ++x = 6;
+      
+      return 0;
+  }
+#+END_SRC
+
+
+*R-Value References (C++11)*
+- A reference created to a temporary
+- Represents a temporary
+- Created with && operator (R-value reference operator)
+- Cannot point to l-values
+- R-value references always bind to temporaries
+- L-value references always bind to l-values
+
+#+ATTR_LATEX: :options {R-value References}
+#+BEGIN_infobox
+int &&r1 = 10;          //R-value reference
+int &&r2 = Add(5,8);    //Add returns by value (temporary)
+int &&r3 = 7+2;         //Expression return a temporary
+#+END_infobox
+
+#+LATEX: \captionof{listing}{R-Value References, binds to const reference}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  using namespace std;
+
+  //Returns r-value
+  int Add(int x, int y)   { return x+ y;}
+  //Returns l-value
+  int & Transform(int &x) { x *=x; return x;}
+
+  void Print(int &x)       { cout << "Print(int &x)" << endl; (void)x;}
+  void Print(const int &x) { cout << "Print(const int &x)" << endl; (void)x;}
+  //void Print(int &&x)      { cout << "Print(int &&x)" << endl; }
+
+  int main() {
+      int x = 10;
+      Print(x);
+      Print(3);
+      
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: Print(int &x)
+: Print(const int &x)
+
+#+LATEX: \captionof{listing}{R-Value References, binds to R-value Reference}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+  #include <iostream>
+
+  using namespace std;
+
+  //Returns r-value
+  int Add(int x, int y)   { return x+ y;}
+  //Returns l-value
+  int & Transform(int &x) { x *=x; return x;}
+
+  void Print(int &x)       { cout << "Print(int &x)" << endl; (void)x;}
+  void Print(const int &x) { cout << "Print(const int &x)" << endl; (void)x;}
+  void Print(int &&x)      { cout << "Print(int &&x)" << endl; (void)x;}
+
+  int main() {
+      int x = 10;
+      Print(x);
+      Print(3);
+      
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: Print(int &x)
+: Print(int &&x)
+
+#+ATTR_LATEX: :options {To Remember}
+#+BEGIN_infobox
+The temporary is always bind to R-value references, but they can also
+bind to const references. In overloading they always bind to R-Value references.
+
+This can be used to detect temporaries in expressions that use user defined objects.
+#+END_infobox
+
+** Move Semantics - Basics (C++11)
+- Copy is implemented through copy constructor
+- Copy of the object state is created
+- Wasteful in case copy is created from a temporary
+- Instead, the state can be moved from the source object
+- Implemented through move semantics
+
+** Move Semantics - Implementation (C++11)
+
+#+ATTR_LATEX: :options {NRVO}
+#+BEGIN_infobox
+NRVO: Named Return Value Optimization.
+
+It’s a specific compiler optimization in C++ where a named local
+variable returned from a function is constructed directly in the
+caller’s return slot, avoiding a copy or move.
+
+OFF: C++ :flags "-std=c++11 -fno-elide-constructors"
+#+END_infobox
+
+#+LATEX: \captionof{listing}{Integer Class - Copy Semantics}
+#+BEGIN_SRC C++ :flags "-std=c++11 -Wall -Wextra -fno-elide-constructors" :exports both :results output verbatim
+  #include <iostream>
+  using namespace std;
+  class Integer {
+      int *m_pInt;
+  public:
+      Integer() {                                              // default constructor
+        cout << "Integer()" << endl;
+        m_pInt = new int(0);
+      }
+      Integer(int value) {                                     // parameterized constructor
+        cout << "Integer(int)" << endl;
+        m_pInt = new int(value);
+      }
+      Integer(const Integer &obj) {                            // copy constructor
+        cout << "Integer(const Integer& obj)" << endl;
+        m_pInt = new int(*obj.m_pInt);                       // allocate new memory and copy the data
+      }
+      ~Integer() {                                             // destructor
+    cout << "~Integer()" << endl;
+    delete m_pInt;
+      }
+      int GetValue() const {return *m_pInt;}        
+      void SetValue(int value) {*m_pInt = value;}
+  };
+  Integer Add(const Integer &a, const Integer &b)
+  {
+      Integer temp;
+      temp.SetValue(a.GetValue() + b.GetValue());
+      return temp;                                               // calls copy constructor when returning by value
+  }  
+  int main() {
+      Integer a(1), b(3);
+      a.SetValue(Add(a,b).GetValue());
+      return 0;
+  }
+#+END_SRC
+
+#+RESULTS:
+: Integer(int)
+: Integer(int)
+: Integer()
+: Integer(const Integer& obj)
+: ~Integer()
+: ~Integer()
+: ~Integer()
+: ~Integer()
+
+#+LATEX: \captionof{listing}{Integer Class - Move Semantics}
+#+BEGIN_SRC C++ :exports both :flags "-std=c++17 -Wall -Wextra -fno-elide-constructors" :results output verbatim
+#include <iostream>
+using namespace std;
+class Integer {
+    int *m_pInt;
+public:
+    Integer() {                                              // default constructor
+        cout << "Integer()" << endl;
+        m_pInt = new int(0);
+    }
+    Integer(int value) {                                     // parameterized constructor
+        cout << "Integer(int)" << endl;
+        m_pInt = new int(value);
+    }
+    Integer(const Integer & obj) {                           // copy constructor
+        cout << "Integer(const Integer& obj)" << endl;
+        m_pInt = new int(*obj.m_pInt);
+    }
+    Integer(Integer && obj) {                                // MOVE CONSTRUCTOR
+    cout << "Integer(Integer && obj)" << endl;
+    m_pInt = obj.m_pInt;                                 // steeling the resources from obj (shallow copy)
+    obj.m_pInt = nullptr;                                // avoids crashing desctructor when obj is deleted
+    }
+    ~Integer() {
+    cout << "~Integer()" << endl;
+    delete m_pInt;
+    }
+    int GetValue() const {return *m_pInt;}          
+    void SetValue(int value) {*m_pInt = value;}
+};
+Integer Add(const Integer &a, const Integer &b)
+{
+    Integer temp;
+    temp.SetValue(a.GetValue() + b.GetValue());
+    return temp;
+}
+int main() {
+    Integer a(1), b(3);
+    a.SetValue(Add(a,b).GetValue());
+    return 0;
+}
+#+END_SRC
+
+#+RESULTS:
+: Integer(int)
+: Integer(int)
+: Integer()
+: Integer(Integer && obj)
+: ~Integer()
+: ~Integer()
+: ~Integer()
+: ~Integer()
